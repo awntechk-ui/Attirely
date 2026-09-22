@@ -1,0 +1,108 @@
+# ==============================
+# ENVIRONMENT / SECRETS
+# ==============================
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.crt
+
+# Firebase / service account credentials
+service-account.json
+firebase-adminsdk-*.json
+google-services-private.json
+
+
+# ==============================
+# Flutter
+# ==============================
+
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/build/
+frontend/.pub/
+frontend/.idea/
+
+# Flutter generated files
+frontend/android/.gradle/
+frontend/android/app/debug/
+frontend/android/app/profile/
+frontend/android/app/release/
+
+# iOS
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/ephemeral/
+frontend/ios/Flutter/Generated.xcconfig
+frontend/ios/Flutter/flutter_export_environment.sh
+
+# Xcode
+frontend/ios/Runner.xcworkspace/xcuserdata/
+frontend/ios/Runner.xcodeproj/xcuserdata/
+
+# macOS
+frontend/macos/Pods/
+frontend/macos/Flutter/ephemeral/
+
+
+# ==============================
+# Python
+# ==============================
+
+backend/__pycache__/
+backend/**/*.pyc
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+
+# Virtual environments
+backend/venv/
+backend/.venv/
+backend/env/
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+
+
+# ==============================
+# IDE
+# ==============================
+
+.idea/
+.vscode/
+
+# VS Code local settings
+*.code-workspace
+
+
+# ==============================
+# OS
+# ==============================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# ==============================
+# Logs
+# ==============================
+
+*.log
+logs/
+
+
+# ==============================
+# Temporary files
+# ==============================
+
+*.tmp
+*.temp
+*.swp
