@@ -38,6 +38,7 @@ dependencies:
   flutter_screenutil: ^5.9.3
   http: ^1.6.0
   flutter_secure_storage: ^11.2.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -61,12 +62,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets :
-    - assets/background/casual_outfit_bg.png
-    - assets/background/splash_background.png
-    - assets/logos/burgandy_attirely_logo.png
-    - assets/logos/white_attirely_logo.png
-    - assets/background/login_bg.png
-    - assets/background/register_bg.png
+    - assets/background/
+    - assets/logos/
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

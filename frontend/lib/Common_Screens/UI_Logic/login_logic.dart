@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../User/User_API_routes/auth_api_routes.dart';
+import '../auth_api_routes.dart';
 import '../../app_routes.dart';
+import '../session_manager.dart';
 
 class LoginLogic {
   final TextEditingController emailController = TextEditingController();
@@ -24,11 +25,17 @@ class LoginLogic {
     isLoading = true;
 
     try {
-      await AuthApiRoutes.login(
+      final response = await AuthApiRoutes.login(
         email: email,
         password: password,
       );
 
+      final accessToken = response['access_token'];
+      if (accessToken == null) {
+        throw Exception('Access token not received');
+      }
+
+      await SessionManager.setToken(accessToken);
       if (!context.mounted) return;
 
       Navigator.pushReplacementNamed(

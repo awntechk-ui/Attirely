@@ -1,6 +1,6 @@
 from datetime import date
-
-from fastapi import APIRouter, HTTPException
+from app.core.auth_dependency import get_current_user
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr, Field
 
 from app.core.supabase import supabase
@@ -153,3 +153,11 @@ def login(data: LoginRequest):
 
             detail=str(e)
         )
+@router.get("/session")
+def validate_session(
+    current_user=Depends(get_current_user),
+):
+    return {
+        "valid": True,
+        "user_id": str(current_user.id),
+    }

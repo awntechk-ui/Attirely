@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../UI_Logic/splash_logic.dart';
 import 'login.dart';
 
 
@@ -22,6 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
   int _currentPage = 0;
 
   Timer? _pageTimer;
+  final SplashLogic _logic = SplashLogic();
 
   // ================================================================
   // SPLASH IMAGES
@@ -85,31 +87,7 @@ class _SplashScreenState extends State<SplashScreen> {
         else {
           timer.cancel();
 
-          Navigator.of(context).pushReplacement(
-            PageRouteBuilder(
-              pageBuilder: (
-                  context,
-                  animation,
-                  secondaryAnimation,
-                  ) =>
-              const LoginPage(),
-
-              transitionDuration:
-              const Duration(milliseconds: 600),
-
-              transitionsBuilder: (
-                  context,
-                  animation,
-                  secondaryAnimation,
-                  child,
-                  ) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
-              },
-            ),
-          );
+          _logic.checkSession(context);
         }
       },
     );

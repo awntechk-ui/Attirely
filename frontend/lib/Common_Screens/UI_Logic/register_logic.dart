@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../User/User_API_routes/auth_api_routes.dart';
+import '../auth_api_routes.dart';
 import '../../app_routes.dart';
 
 class RegisterLogic {

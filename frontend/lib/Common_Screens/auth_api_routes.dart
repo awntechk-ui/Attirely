@@ -2,10 +2,9 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-class AuthApiRoutes {
-  static const String baseUrl =
-      'http://192.168.1.9:8000';
+import '../../app_config.dart';
 
+class AuthApiRoutes {
   // =========================
   // REGISTER
   // =========================
@@ -21,7 +20,7 @@ class AuthApiRoutes {
   }) async {
     final response = await http.post(
       Uri.parse(
-        '$baseUrl/auth/register',
+        '${AppConfig.baseUrl}/auth/register',
       ),
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +61,7 @@ class AuthApiRoutes {
   }) async {
     final response = await http.post(
       Uri.parse(
-        '$baseUrl/auth/login',
+        '${AppConfig.baseUrl}/auth/login',
       ),
       headers: {
         'Content-Type': 'application/json',
@@ -85,6 +84,37 @@ class AuthApiRoutes {
     throw Exception(
       data['detail'] ??
           'Login failed',
+    );
+  }
+  // =========================
+// VALIDATE SESSION
+// =========================
+
+  static Future<Map<String, dynamic>> validateSession({
+    required String accessToken,
+  }) async {
+    final response = await http.get(
+      Uri.parse(
+        '${AppConfig.baseUrl}/auth/session',
+      ),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final data = jsonDecode(
+      response.body,
+    );
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
+      return data;
+    }
+
+    throw Exception(
+      data['detail'] ??
+          'Session validation failed',
     );
   }
 }
