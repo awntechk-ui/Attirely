@@ -16,7 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   bool showPassword = false;
 
   // Attirely colors
-  static const Color burgundy = Color(0xFF800020);
+  static const Color burgundy = Color(0xFF8E2945);
   static const Color gold = Color(0xFFD4AF37);
 
   @override
@@ -383,7 +383,7 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 50),
 
                     // Terms text
                     const Text(

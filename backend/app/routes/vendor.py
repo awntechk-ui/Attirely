@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.auth_dependency import get_current_user
-from app.core.supabase import supabase
+from app.core.supabase import supabase_admin as supabase
 
 router = APIRouter(
     prefix="/vendor",
@@ -21,7 +21,7 @@ def get_my_vendor(
         response = (
             supabase
             .table("vendors")
-            .select("id")
+            .select("id, store_name")
             .eq("user_id", user_id)
             .limit(1)
             .execute()
@@ -36,7 +36,8 @@ def get_my_vendor(
 
         return {
             "exists": True,
-            "vendor_id": response.data[0]["id"]
+            "vendor_id": response.data[0]["id"],
+            "store_name": response.data[0]["store_name"]
         }
 
     except Exception as e:

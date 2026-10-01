@@ -73,12 +73,15 @@ frontend/.packages
 frontend/build/
 frontend/.pub/
 frontend/.idea/
+frontend/analysis_options.yaml
+frontend/pubspec.lock
 
 # Flutter generated files
 frontend/android/.gradle/
 frontend/android/app/debug/
 frontend/android/app/profile/
 frontend/android/app/release/
+frontend/android/gradle.properties
 
 # iOS
 frontend/ios/Pods/
@@ -152,3 +155,4 @@ logs/
 *.tmp
 *.temp
 *.swp
+*.zip

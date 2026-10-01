@@ -23,6 +23,7 @@ class VendorAuthApiRoutes {
     );
 
     final data = jsonDecode(response.body);
+    // print("Vendor Data : $data");
 
     if (response.statusCode >= 200 &&
         response.statusCode < 300) {
@@ -88,4 +89,5 @@ class VendorAuthApiRoutes {
           'Failed to create vendor profile',
     );
   }
+
 }

@@ -3,7 +3,7 @@ from app.core.auth_dependency import get_current_user
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, EmailStr, Field
 
-from app.core.supabase import supabase
+from app.core.supabase import supabase_auth as supabase
 
 
 router = APIRouter(

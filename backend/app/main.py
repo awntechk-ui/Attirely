@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.auth import router as auth_router
 from app.routes.vendor import router as vendor_router
+from app.routes.outfits import router as outfits_router
 
 app = FastAPI(
     title="User Backend",
@@ -17,7 +18,7 @@ app.add_middleware(
 )
 app.include_router(auth_router)
 app.include_router(vendor_router)
-
+app.include_router(outfits_router)
 
 
 @app.get("/")
