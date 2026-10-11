@@ -4,7 +4,9 @@ import '../../app_routes.dart';
 import '../auth_api_routes.dart';
 import '../session_manager.dart';
 
+
 class SplashLogic {
+
   // =========================================================
   // CHECK SESSION
   // =========================================================
@@ -12,13 +14,18 @@ class SplashLogic {
   Future<void> checkSession(
       BuildContext context,
       ) async {
+    print('SPLASH CHECK SESSION STARTED');
+
     try {
+
       // -------------------------------------------------------
-      // LOAD TOKEN SAVED ON THE DEVICE
+      // LOAD TOKEN SAVED ON DEVICE
       // -------------------------------------------------------
 
       final accessToken =
       await SessionManager.loadToken();
+      print('SAVED TOKEN EXISTS: ${accessToken != null && accessToken.isNotEmpty}');
+
 
       // -------------------------------------------------------
       // NO SAVED TOKEN
@@ -26,31 +33,83 @@ class SplashLogic {
 
       if (accessToken == null ||
           accessToken.isEmpty) {
+
         _goToLogin(context);
         return;
       }
 
+
       // -------------------------------------------------------
-      // VALIDATE TOKEN WITH BACKEND
+      // VALIDATE TOKEN + GET ACCOUNT ROLE
       // -------------------------------------------------------
 
+      final response =
       await AuthApiRoutes.validateSession(
         accessToken: accessToken,
       );
 
+
       // -------------------------------------------------------
-      // TOKEN IS VALID
+      // READ ROLE
       // -------------------------------------------------------
 
-      if (!context.mounted) return;
+      final role = response['role'];
 
-      Navigator.pushReplacementNamed(
-        context,
-        AppRoutes.home,
+
+      if (role == null) {
+
+        throw Exception(
+          'Account role not found',
+        );
+      }
+
+
+      // -------------------------------------------------------
+      // USER
+      // -------------------------------------------------------
+
+      if (role == 'user') {
+
+        if (!context.mounted) return;
+
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.home,
+        );
+
+        return;
+      }
+
+
+      // -------------------------------------------------------
+      // VENDOR
+      // -------------------------------------------------------
+
+      if (role == 'vendor') {
+
+        if (!context.mounted) return;
+
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.vendorDashboard,
+        );
+
+        return;
+      }
+
+
+      // -------------------------------------------------------
+      // UNKNOWN ROLE
+      // -------------------------------------------------------
+
+      throw Exception(
+        'Unknown account role',
       );
+
     } catch (e) {
+
       // -------------------------------------------------------
-      // TOKEN IS INVALID / EXPIRED
+      // INVALID SESSION / PROFILE PROBLEM
       // -------------------------------------------------------
 
       await SessionManager.clearToken();
@@ -61,6 +120,7 @@ class SplashLogic {
     }
   }
 
+
   // =========================================================
   // GO TO LOGIN
   // =========================================================
@@ -68,6 +128,7 @@ class SplashLogic {
   void _goToLogin(
       BuildContext context,
       ) {
+
     if (!context.mounted) return;
 
     Navigator.pushReplacementNamed(

@@ -15,7 +15,7 @@ class _VendorDashboardPageState
     extends State<VendorDashboardPage> {
   late final DashboardLogic logic;
 
-  static const Color burgundy = Color(0xFF800020);
+  static const Color burgundy = Color(0xFF8E2945);
   static const Color gold = Color(0xFFD4AF37);
   static const Color pageWhite = Color(0xFFFDF9F5);
 

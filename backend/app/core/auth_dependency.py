@@ -1,17 +1,17 @@
 from fastapi import Depends, HTTPException
-from fastapi.security import (
-    HTTPAuthorizationCredentials,
-    HTTPBearer,
-)
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.supabase import (
     supabase_admin,
     supabase_auth,
 )
 
-
 security = HTTPBearer()
 
+
+# ============================================================
+# GET CURRENT AUTH USER
+# ============================================================
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -39,6 +39,10 @@ def get_current_user(
         )
 
 
+# ============================================================
+# GET CURRENT VENDOR
+# ============================================================
+
 def get_current_vendor(
     current_user=Depends(get_current_user),
 ):
@@ -49,7 +53,7 @@ def get_current_vendor(
             supabase_admin
             .table("vendors")
             .select("*")
-            .eq("user_id", user_id)
+            .eq("auth_user_id", user_id)
             .limit(1)
             .execute()
         )
@@ -65,7 +69,12 @@ def get_current_vendor(
     except HTTPException:
         raise
 
-    except Exception:
+    except Exception as e:
+        print(
+            "VENDOR PROFILE ERROR:",
+            repr(e),
+        )
+
         raise HTTPException(
             status_code=500,
             detail="Failed to fetch vendor profile",

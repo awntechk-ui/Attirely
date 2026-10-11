@@ -1,125 +1,165 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
-from app.core.auth_dependency import get_current_user
-from app.core.supabase import supabase_admin as supabase
+from app.core.auth_dependency import (
+    get_current_user,
+    get_current_vendor,
+)
+from app.core.supabase import supabase_admin
+
 
 router = APIRouter(
     prefix="/vendor",
-    tags=["Vendor"]
+    tags=["Vendor"],
 )
 
 
+# ============================================================
+# VENDOR PROFILE RESPONSE
+# ============================================================
+
 @router.get("/me")
-def get_my_vendor(
-    current_user=Depends(get_current_user),
+def get_vendor_profile(
+    vendor=Depends(get_current_vendor),
 ):
-    try:
-        user_id = str(current_user.id)
-
-        # print("CURRENT USER ID:", user_id)
-
-        response = (
-            supabase
-            .table("vendors")
-            .select("id, store_name")
-            .eq("user_id", user_id)
-            .limit(1)
-            .execute()
-        )
-
-        # print("SUPABASE DATA:", response.data)
-
-        if not response.data:
-            return {
-                "exists": False
-            }
-
-        return {
-            "exists": True,
-            "vendor_id": response.data[0]["id"],
-            "store_name": response.data[0]["store_name"]
-        }
-
-    except Exception as e:
-        print("VENDOR ERROR:", repr(e))
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
-from pydantic import BaseModel
+    return {
+        "success": True,
+        "vendor": vendor,
+    }
 
 
-class CreateVendorRequest(BaseModel):
-    full_name: str
-    aadhaar: str | None = None
-    pan: str | None = None
-    role: str
-    store_name: str
-    business_description: str
-    address: str
-    city: str
-    state: str
-    pincode: str
+# ============================================================
+# UPDATE VENDOR PROFILE
+# ============================================================
+
+class VendorUpdateRequest(BaseModel):
+    store_name: str | None = None
+    business_description: str | None = None
+    owner_type: str | None = None
+
+    phone_number: str | None = None
+
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    pincode: str | None = None
+
     instagram: str | None = None
 
+    aadhaar: str | None = None
+    pan: str | None = None
 
-@router.post("/create")
-def create_vendor(
-    data: CreateVendorRequest,
+
+@router.put("/me")
+def update_vendor_profile(
+    data: VendorUpdateRequest,
     current_user=Depends(get_current_user),
 ):
-    try:
-        user_id = str(current_user.id)
+    user_id = str(current_user.id)
 
-        existing = (
-            supabase
-            .table("vendors")
-            .select("id")
-            .eq("user_id", user_id)
-            .limit(1)
-            .execute()
+    # ========================================================
+    # CHECK VENDOR EXISTS
+    # ========================================================
+
+    existing = (
+        supabase_admin
+        .table("vendors")
+        .select("id")
+        .eq("auth_user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+
+    if not existing.data:
+        raise HTTPException(
+            status_code=403,
+            detail="Vendor profile not found",
         )
 
-        if existing.data:
-            raise HTTPException(
-                status_code=400,
-                detail="Vendor profile already exists",
-            )
+    # ========================================================
+    # VALIDATE OWNER TYPE
+    # ========================================================
 
-        response = (
-            supabase
-            .table("vendors")
-            .insert({
-                "user_id": user_id,
-                "full_name": data.full_name,
-                "aadhaar": data.aadhaar,
-                "pan": data.pan,
-                "role": data.role,
-                "store_name": data.store_name,
-                "business_description": data.business_description,
-                "address": data.address,
-                "city": data.city,
-                "state": data.state,
-                "pincode": data.pincode,
-                "instagram": data.instagram,
-            })
-            .execute()
+    if (
+        data.owner_type is not None
+        and data.owner_type
+        not in ["individual", "store_owner"]
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "owner_type must be "
+                "'individual' or 'store_owner'"
+            ),
         )
 
-        return {
-            "success": True,
-            "message": "Vendor profile created successfully",
-            "vendor": response.data[0],
-        }
+    # ========================================================
+    # BUILD UPDATE DATA
+    # ========================================================
 
-    except HTTPException:
-        raise
+    update_data = {
+        key: value
+        for key, value in data.model_dump().items()
+        if value is not None
+    }
 
-    except Exception as e:
-        print("CREATE VENDOR ERROR:", repr(e))
+    if not update_data:
+        raise HTTPException(
+            status_code=400,
+            detail="No fields to update",
+        )
 
+    # ========================================================
+    # UPDATE
+    # ========================================================
+
+    response = (
+        supabase_admin
+        .table("vendors")
+        .update(update_data)
+        .eq("auth_user_id", user_id)
+        .execute()
+    )
+
+    if not response.data:
         raise HTTPException(
             status_code=500,
-            detail=str(e),
+            detail="Failed to update vendor profile",
         )
+
+    return {
+        "success": True,
+        "message": "Vendor profile updated successfully",
+        "vendor": response.data[0],
+    }
+
+
+# ============================================================
+# CHECK CURRENT USER'S VENDOR STATUS
+# ============================================================
+
+@router.get("/status")
+def vendor_status(
+    current_user=Depends(get_current_user),
+):
+    user_id = str(current_user.id)
+
+    response = (
+        supabase_admin
+        .table("vendors")
+        .select("id, store_name, owner_type")
+        .eq("auth_user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+
+    if not response.data:
+        return {
+            "is_vendor": False,
+            "vendor": None,
+        }
+
+    return {
+        "is_vendor": True,
+        "vendor": response.data[0],
+    }   

@@ -15,8 +15,13 @@ class _LoginPageState extends State<LoginPage> {
 
   bool showPassword = false;
 
-  // Attirely colors
+  // =========================================================
+  // COLORS
+  // =========================================================
+
   static const Color burgundy = Color(0xFF8E2945);
+  static const Color lightBurgundy = Color(0xFFA4536A);
+  static const Color softBorder = Color(0xFFE5D6DA);
   static const Color gold = Color(0xFFD4AF37);
 
   @override
@@ -31,32 +36,61 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  // =========================================================
+  // INPUT DECORATION
+  // =========================================================
+
   InputDecoration fieldDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(
-        color: burgundy,
+        color: lightBurgundy,
         fontSize: 14,
       ),
       filled: true,
-      fillColor: Colors.white.withOpacity(0.72),
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(
+          color: softBorder,
+          width: 1,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(
           color: burgundy,
-          width: 1,
+          width: 1.2,
         ),
       ),
     );
   }
+
+  // =========================================================
+  // LOGIN
+  // =========================================================
+
+  void performLogin() {
+    setState(() {
+      logic.isLoading = true;
+    });
+
+    logic.login(context).whenComplete(() {
+      if (mounted) {
+        setState(() {
+          logic.isLoading = false;
+        });
+      }
+    });
+  }
+
+  // =========================================================
+  // REGISTER
+  // =========================================================
 
   void goToRegister() {
     Navigator.pushReplacementNamed(
@@ -65,15 +99,17 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // =========================================================
+  // BUILD
+  // =========================================================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      extendBody: true,
       resizeToAvoidBottomInset: true,
 
       body: GestureDetector(
-        // Swipe left on Login → Register
         onHorizontalDragEnd: (details) {
           if (details.primaryVelocity != null &&
               details.primaryVelocity! < -300) {
@@ -84,7 +120,10 @@ class _LoginPageState extends State<LoginPage> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Full-screen Login background
+            // =====================================================
+            // BACKGROUND
+            // =====================================================
+
             Positioned.fill(
               child: Image.asset(
                 'assets/background/login_bg.png',
@@ -92,131 +131,181 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            // Login content
+            // =====================================================
+            // CONTENT
+            // =====================================================
+
             SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(28, 22, 28, 35),
+                padding: const EdgeInsets.fromLTRB(
+                  28,
+                  45,
+                  28,
+                  25,
+                ),
+
                 child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
                   children: [
-                    // Top Login / Sign Up navigation
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            children: [
-                              const Text(
-                                'Login',
-                                style: TextStyle(
-                                  color: burgundy,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                height: 1.5,
-                                color: burgundy,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: goToRegister,
-                            child: Column(
-                              children: [
-                                const Text(
-                                  'Sign Up',
-                                  style: TextStyle(
-                                    color: burgundy,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  height: 1,
-                                  color: Colors.transparent,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    // =================================================
+                    // LOGO
+                    // =================================================
 
-                    const SizedBox(height: 22),
-
-                    // Logo
                     Center(
                       child: Image.asset(
                         'assets/logos/burgandy_attirely_logo.png',
-                        height: 75,
+                        height: 70,
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 28),
 
-                    // Welcome Back
-                    const Text(
-                      'Welcome Back',
-                      style: TextStyle(
-                        color: burgundy,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w700,
+                    // =================================================
+                    // TITLE
+                    // =================================================
+
+                    Center(
+                      child: Text(
+                        'Welcome to Attirely',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: burgundy,
+                          fontSize: 29,
+                          fontWeight: FontWeight.w700,
+                          shadows: [
+                            Shadow(
+                              color: Color(0x22000000),
+                              blurRadius: 3,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
                     const SizedBox(height: 7),
 
-                    const Text(
-                      'Sign in to continue to Attirely',
-                      style: TextStyle(
-                        color: burgundy,
-                        fontSize: 14,
+                    // =================================================
+                    // SUBTITLE
+                    // =================================================
+
+                    Center(
+                      child: Text(
+                        'Rent your style. Share your wardrobe.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: lightBurgundy,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 35),
 
-                    // Email
+                    // =================================================
+                    // WHO ARE YOU?
+                    // =================================================
+
+                    Center(
+                      child: Text(
+                        'Who are you?',
+                        style: const TextStyle(
+                          color: burgundy,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // =================================================
+                    // USER / VENDOR
+                    // =================================================
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _RoleOption(
+                            icon: Icons.person_outline,
+                            label: 'User',
+                            selected:
+                            logic.selectedRole == 'user',
+                            onTap: () {
+                              setState(() {
+                                logic.selectedRole = 'user';
+                              });
+                            },
+                          ),
+                        ),
+
+                        const SizedBox(width: 14),
+
+                        Expanded(
+                          child: _RoleOption(
+                            icon: Icons.storefront_outlined,
+                            label: 'Vendor',
+                            selected:
+                            logic.selectedRole == 'vendor',
+                            onTap: () {
+                              setState(() {
+                                logic.selectedRole = 'vendor';
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // =================================================
+                    // EMAIL
+                    // =================================================
+
                     TextField(
                       controller: logic.emailController,
-                      keyboardType: TextInputType.emailAddress,
                       style: const TextStyle(
                         color: burgundy,
+                        fontSize: 15,
                       ),
-                      decoration: fieldDecoration(
-                        'Email address',
-                      ).copyWith(
-                        prefixIcon: const Icon(
-                          Icons.mail_outline,
-                          color: burgundy,
-                          size: 19,
-                        ),
-                      ),
+                      keyboardType:
+                      TextInputType.emailAddress,
+                      textInputAction:
+                      TextInputAction.next,
+                      decoration:
+                      fieldDecoration('Email address'),
                     ),
 
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 14),
 
-                    // Password
+                    // =================================================
+                    // PASSWORD
+                    // =================================================
+
                     TextField(
                       controller: logic.passwordController,
-                      obscureText: !showPassword,
                       style: const TextStyle(
                         color: burgundy,
+                        fontSize: 15,
                       ),
-                      decoration: fieldDecoration(
-                        'Password',
-                      ).copyWith(
-                        prefixIcon: const Icon(
-                          Icons.lock_outline,
-                          color: burgundy,
-                          size: 19,
-                        ),
+                      obscureText: !showPassword,
+                      textInputAction:
+                      TextInputAction.done,
+                      onSubmitted: (_) {
+                        if (!logic.isLoading) {
+                          performLogin();
+                        }
+                      },
+                      decoration:
+                      fieldDecoration('Password').copyWith(
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
-                              showPassword = !showPassword;
+                              showPassword =
+                              !showPassword;
                             });
                           },
                           icon: Icon(
@@ -224,70 +313,48 @@ class _LoginPageState extends State<LoginPage> {
                                 ? Icons.visibility
                                 : Icons.visibility_off,
                             color: burgundy,
-                            size: 19,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 25),
 
-                    // Forgot password
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          // Will be implemented later.
-                        },
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            color: burgundy,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
+                    // =================================================
+                    // LOGIN BUTTON
+                    // =================================================
 
-                    const SizedBox(height: 12),
-
-                    // Login button
                     SizedBox(
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton(
                         onPressed: logic.isLoading
                             ? null
-                            : () async {
-                          setState(() {
-                            logic.isLoading = true;
-                          });
+                            : performLogin,
 
-                          await logic.login(context);
-
-                          if (mounted) {
-                            setState(() {
-                              logic.isLoading = false;
-                            });
-                          }
-                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: burgundy,
                           elevation: 0,
+
                           side: const BorderSide(
                             color: gold,
                             width: 1.5,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
+
+                          shape:
+                          RoundedRectangleBorder(
+                            borderRadius:
+                            BorderRadius.circular(18),
                           ),
                         ),
+
                         child: logic.isLoading
                             ? const SizedBox(
                           height: 22,
                           width: 22,
-                          child: CircularProgressIndicator(
+                          child:
+                          CircularProgressIndicator(
                             strokeWidth: 2,
                             color: burgundy,
                           ),
@@ -297,132 +364,36 @@ class _LoginPageState extends State<LoginPage> {
                           style: TextStyle(
                             color: burgundy,
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontWeight:
+                            FontWeight.w600,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 18),
 
-                    // Divider
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 1,
-                            color: burgundy.withOpacity(0.35),
-                          ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 14),
-                          child: Text(
-                            'or continue with',
-                            style: TextStyle(
-                              color: burgundy,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Container(
-                            height: 1,
-                            color: burgundy.withOpacity(0.35),
-                          ),
-                        ),
-                      ],
-                    ),
+                    // =================================================
+                    // REGISTER
+                    // =================================================
 
-                    const SizedBox(height: 20),
-
-                    // Social buttons - UI only
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _SocialButton(
-                          icon: Icons.g_mobiledata,
-                          onTap: () {},
+                    Center(
+                      child: TextButton(
+                        onPressed: goToRegister,
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize:
+                          MaterialTapTargetSize
+                              .shrinkWrap,
                         ),
-                        const SizedBox(width: 14),
-                        _SocialButton(
-                          icon: Icons.apple,
-                          onTap: () {},
-                        ),
-                        const SizedBox(width: 14),
-                        _SocialButton(
-                          icon: Icons.facebook,
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // Register
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Don't have an account? ",
+                        child: const Text(
+                          "Don't have an account? Register",
                           style: TextStyle(
                             color: burgundy,
-                            fontSize: 13,
+                            fontSize: 14,
                           ),
                         ),
-                        TextButton(
-                          onPressed: goToRegister,
-                          child: const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              color: burgundy,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 50),
-
-                    // Terms text
-                    const Text(
-                      'By continuing, you agree to our',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: burgundy,
-                        fontSize: 10,
-                      ),
-                    ),
-
-                    const SizedBox(height: 2),
-
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: const TextSpan(
-                        style: TextStyle(
-                          color: burgundy,
-                          fontSize: 10,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: 'Terms & Conditions',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                          TextSpan(
-                            text: ' and ',
-                          ),
-                          TextSpan(
-                            text: 'Privacy Policy.',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ],
@@ -436,36 +407,106 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-class _SocialButton extends StatelessWidget {
+
+// =============================================================
+// ROLE OPTION
+// =============================================================
+
+class _RoleOption extends StatelessWidget {
   final IconData icon;
+  final String label;
+  final bool selected;
   final VoidCallback onTap;
 
-  const _SocialButton({
+  const _RoleOption({
     required this.icon,
+    required this.label,
+    required this.selected,
     required this.onTap,
   });
 
+  static const Color burgundy =
+  Color(0xFF6B1E2E);
+
+  static const Color softBorder =
+  Color(0xFFE5D6DA);
+
+  static const Color gold =
+  Color(0xFFD4AF37);
+
   @override
   Widget build(BuildContext context) {
-    const Color burgundy = Color(0xFF800020);
-
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 52,
-        width: 70,
+
+      borderRadius:
+      BorderRadius.circular(16),
+
+      child: AnimatedContainer(
+        duration:
+        const Duration(milliseconds: 180),
+
+        height: 70,
+
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.72),
-          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+
+          borderRadius:
+          BorderRadius.circular(16),
+
           border: Border.all(
-            color: burgundy.withOpacity(0.25),
+            color: selected
+                ? burgundy
+                : softBorder,
+
+            width: selected ? 1.5 : 1,
           ),
+
+          boxShadow: selected
+              ? [
+            BoxShadow(
+              color:
+              gold.withOpacity(0.15),
+              blurRadius: 8,
+              spreadRadius: 1,
+            ),
+          ]
+              : null,
         ),
-        child: Icon(
-          icon,
-          color: burgundy,
-          size: 25,
+
+        child: Row(
+          mainAxisAlignment:
+          MainAxisAlignment.center,
+
+          children: [
+            Icon(
+              icon,
+              color: burgundy,
+              size: 23,
+            ),
+
+            const SizedBox(width: 9),
+
+            Text(
+              label,
+              style: const TextStyle(
+                color: burgundy,
+                fontSize: 15,
+                fontWeight:
+                FontWeight.w600,
+              ),
+            ),
+
+            if (selected) ...[
+              const SizedBox(width: 7),
+
+              const Icon(
+                Icons.check_circle,
+                color: burgundy,
+                size: 17,
+              ),
+            ],
+          ],
         ),
       ),
     );

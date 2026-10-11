@@ -135,16 +135,13 @@ class _RegisterPageState extends State<RegisterPage> {
       backgroundColor: Colors.transparent,
       extendBody: true,
       resizeToAvoidBottomInset: true,
-
       body: GestureDetector(
-        // Swipe right on Register → Login
         onHorizontalDragEnd: (details) {
           if (details.primaryVelocity != null &&
               details.primaryVelocity! > 300) {
             goToLogin();
           }
         },
-
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -166,10 +163,6 @@ class _RegisterPageState extends State<RegisterPage> {
             SafeArea(
               child: Column(
                 children: [
-                  // =================================================
-                  // SCROLLABLE FORM
-                  // =================================================
-
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(
@@ -229,7 +222,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           const SizedBox(height: 28),
 
                           // =================================================
-                          // FULL NAME
+                          // COMMON DETAILS
                           // =================================================
 
                           TextField(
@@ -242,10 +235,6 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
 
                           const SizedBox(height: 14),
-
-                          // =================================================
-                          // PHONE NUMBER
-                          // =================================================
 
                           TextField(
                             controller: logic.phoneNumberController,
@@ -264,10 +253,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
                           const SizedBox(height: 14),
 
-                          // =================================================
-                          // EMAIL
-                          // =================================================
-
                           TextField(
                             controller: logic.emailController,
                             style: inputTextStyle,
@@ -279,10 +264,6 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
 
                           const SizedBox(height: 14),
-
-                          // =================================================
-                          // PASSWORD
-                          // =================================================
 
                           TextField(
                             controller: logic.passwordController,
@@ -309,17 +290,15 @@ class _RegisterPageState extends State<RegisterPage> {
 
                           const SizedBox(height: 14),
 
-                          // =================================================
-                          // CONFIRM PASSWORD
-                          // =================================================
-
                           TextField(
-                            controller: logic.confirmPasswordController,
+                            controller:
+                            logic.confirmPasswordController,
                             style: inputTextStyle,
                             obscureText: !showConfirmPassword,
                             textInputAction: TextInputAction.next,
                             decoration:
-                            fieldDecoration('Confirm password').copyWith(
+                            fieldDecoration('Confirm password')
+                                .copyWith(
                               suffixIcon: IconButton(
                                 onPressed: () {
                                   setState(() {
@@ -354,7 +333,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius:
+                                BorderRadius.circular(16),
                                 border: Border.all(
                                   color: softBorder,
                                   width: 1,
@@ -370,7 +350,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                           '${logic.dateOfBirth!.month.toString().padLeft(2, '0')}/'
                                           '${logic.dateOfBirth!.year}',
                                       style: TextStyle(
-                                        color: logic.dateOfBirth == null
+                                        color:
+                                        logic.dateOfBirth == null
                                             ? lightBurgundy
                                             : burgundy,
                                         fontSize: 15,
@@ -487,18 +468,214 @@ class _RegisterPageState extends State<RegisterPage> {
                             ],
                           ),
 
-                          // Small bottom space inside scroll area
-                          // so the last form item doesn't touch the
-                          // fixed buttons.
+                          // =================================================
+                          // VENDOR DETAILS
+                          // =================================================
+
+                          if (logic.hasStore == true) ...[
+                            const SizedBox(height: 28),
+
+                            Text(
+                              'Store details',
+                              style: shadowTextStyle.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            const Text(
+                              'Tell us a little about your rental business.',
+                              style: TextStyle(
+                                color: lightBurgundy,
+                                fontSize: 13,
+                              ),
+                            ),
+
+                            const SizedBox(height: 18),
+
+                            // Store name
+                            TextField(
+                              controller:
+                              logic.storeNameController,
+                              style: inputTextStyle,
+                              textInputAction:
+                              TextInputAction.next,
+                              decoration: fieldDecoration(
+                                'Store / Brand name',
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Business description
+                            TextField(
+                              controller: logic
+                                  .businessDescriptionController,
+                              style: inputTextStyle,
+                              maxLines: 3,
+                              textInputAction:
+                              TextInputAction.newline,
+                              decoration: fieldDecoration(
+                                'Business description',
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Owner type
+                            DropdownButtonFormField<String>(
+                              value: logic.ownerType,
+                              dropdownColor: Colors.white,
+                              style: const TextStyle(
+                                color: burgundy,
+                                fontSize: 15,
+                              ),
+                              decoration: fieldDecoration(
+                                'Owner type',
+                              ),
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: burgundy,
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'individual',
+                                  child: Text(
+                                    'Individual',
+                                    style: TextStyle(
+                                      color: burgundy,
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'store_owner',
+                                  child: Text(
+                                    'Store owner',
+                                    style: TextStyle(
+                                      color: burgundy,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  logic.ownerType = value;
+                                });
+                              },
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Address
+                            TextField(
+                              controller: logic.addressController,
+                              style: inputTextStyle,
+                              maxLines: 2,
+                              textInputAction:
+                              TextInputAction.next,
+                              decoration: fieldDecoration(
+                                'Address',
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // City
+                            TextField(
+                              controller: logic.cityController,
+                              style: inputTextStyle,
+                              textInputAction:
+                              TextInputAction.next,
+                              decoration: fieldDecoration(
+                                'City',
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // State
+                            TextField(
+                              controller: logic.stateController,
+                              style: inputTextStyle,
+                              textInputAction:
+                              TextInputAction.next,
+                              decoration: fieldDecoration(
+                                'State',
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Pincode
+                            TextField(
+                              controller: logic.pincodeController,
+                              style: inputTextStyle,
+                              keyboardType:
+                              TextInputType.number,
+                              textInputAction:
+                              TextInputAction.next,
+                              decoration: fieldDecoration(
+                                'Pincode',
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Instagram
+                            TextField(
+                              controller:
+                              logic.instagramController,
+                              style: inputTextStyle,
+                              keyboardType:
+                              TextInputType.url,
+                              textInputAction:
+                              TextInputAction.next,
+                              decoration: fieldDecoration(
+                                'Instagram username (optional)',
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // Aadhaar
+                            TextField(
+                              controller:
+                              logic.aadhaarController,
+                              style: inputTextStyle,
+                              keyboardType:
+                              TextInputType.number,
+                              textInputAction:
+                              TextInputAction.next,
+                              decoration: fieldDecoration(
+                                'Aadhaar number (optional)',
+                              ),
+                            ),
+
+                            const SizedBox(height: 14),
+
+                            // PAN
+                            TextField(
+                              controller: logic.panController,
+                              style: inputTextStyle,
+                              textInputAction:
+                              TextInputAction.done,
+                              decoration: fieldDecoration(
+                                'PAN number (optional)',
+                              ),
+                            ),
+                          ],
+
                           const SizedBox(height: 20),
                         ],
                       ),
                     ),
                   ),
 
-                  // =================================================
+                  // =========================================================
                   // FIXED BOTTOM SECTION
-                  // =================================================
+                  // =========================================================
 
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -510,10 +687,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // =================================================
-                        // REGISTER BUTTON
-                        // =================================================
-
                         SizedBox(
                           width: double.infinity,
                           height: 54,
@@ -544,14 +717,16 @@ class _RegisterPageState extends State<RegisterPage> {
                                 width: 1.5,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius:
+                                BorderRadius.circular(18),
                               ),
                             ),
                             child: logic.isLoading
                                 ? const SizedBox(
                               height: 22,
                               width: 22,
-                              child: CircularProgressIndicator(
+                              child:
+                              CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: burgundy,
                               ),
@@ -561,18 +736,14 @@ class _RegisterPageState extends State<RegisterPage> {
                               style: TextStyle(
                                 color: burgundy,
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontWeight:
+                                FontWeight.w600,
                               ),
                             ),
                           ),
                         ),
 
-                        // YOUR 4px GAP
                         const SizedBox(height: 4),
-
-                        // =================================================
-                        // LOGIN
-                        // =================================================
 
                         Center(
                           child: TextButton(

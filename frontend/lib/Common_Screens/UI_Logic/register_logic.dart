@@ -4,6 +4,10 @@ import '../auth_api_routes.dart';
 import '../../app_routes.dart';
 
 class RegisterLogic {
+  // =========================================================
+  // COMMON ACCOUNT DETAILS
+  // =========================================================
+
   final TextEditingController emailController =
   TextEditingController();
 
@@ -23,7 +27,44 @@ class RegisterLogic {
   String? gender;
   bool? hasStore;
 
+  // =========================================================
+  // VENDOR DETAILS
+  // =========================================================
+
+  final TextEditingController storeNameController =
+  TextEditingController();
+
+  final TextEditingController businessDescriptionController =
+  TextEditingController();
+
+  final TextEditingController addressController =
+  TextEditingController();
+
+  final TextEditingController cityController =
+  TextEditingController();
+
+  final TextEditingController stateController =
+  TextEditingController();
+
+  final TextEditingController pincodeController =
+  TextEditingController();
+
+  final TextEditingController instagramController =
+  TextEditingController();
+
+  final TextEditingController aadhaarController =
+  TextEditingController();
+
+  final TextEditingController panController =
+  TextEditingController();
+
+  String? ownerType;
+
   bool isLoading = false;
+
+  // =========================================================
+  // REGISTER
+  // =========================================================
 
   Future<void> register(BuildContext context) async {
     final email = emailController.text.trim();
@@ -32,7 +73,10 @@ class RegisterLogic {
     final fullName = fullNameController.text.trim();
     final phoneNumber = phoneNumberController.text.trim();
 
-    // Check required fields
+    // =======================================================
+    // COMMON VALIDATION
+    // =======================================================
+
     if (email.isEmpty ||
         password.isEmpty ||
         confirmPassword.isEmpty ||
@@ -41,33 +85,52 @@ class RegisterLogic {
         dateOfBirth == null ||
         gender == null ||
         hasStore == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all fields'),
-        ),
+      _showMessage(
+        context,
+        'Please fill all required fields',
       );
       return;
     }
 
-    // Check password length
     if (password.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password must be at least 8 characters'),
-        ),
+      _showMessage(
+        context,
+        'Password must be at least 8 characters',
       );
       return;
     }
 
-    // Check password match
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Passwords do not match'),
-        ),
+      _showMessage(
+        context,
+        'Passwords do not match',
       );
       return;
     }
+
+    // =======================================================
+    // VENDOR VALIDATION
+    // =======================================================
+
+    if (hasStore == true) {
+      if (storeNameController.text.trim().isEmpty ||
+          businessDescriptionController.text.trim().isEmpty ||
+          ownerType == null ||
+          addressController.text.trim().isEmpty ||
+          cityController.text.trim().isEmpty ||
+          stateController.text.trim().isEmpty ||
+          pincodeController.text.trim().isEmpty) {
+        _showMessage(
+          context,
+          'Please fill all required store details',
+        );
+        return;
+      }
+    }
+
+    // =======================================================
+    // API CALL
+    // =======================================================
 
     try {
       await AuthApiRoutes.register(
@@ -79,14 +142,56 @@ class RegisterLogic {
         dateOfBirth!.toIso8601String().split('T')[0],
         gender: gender!,
         hasStore: hasStore!,
+
+        // Vendor details
+        storeName: hasStore == true
+            ? storeNameController.text.trim()
+            : null,
+
+        businessDescription: hasStore == true
+            ? businessDescriptionController.text.trim()
+            : null,
+
+        ownerType: hasStore == true
+            ? ownerType
+            : null,
+
+        address: hasStore == true
+            ? addressController.text.trim()
+            : null,
+
+        city: hasStore == true
+            ? cityController.text.trim()
+            : null,
+
+        state: hasStore == true
+            ? stateController.text.trim()
+            : null,
+
+        pincode: hasStore == true
+            ? pincodeController.text.trim()
+            : null,
+
+        instagram: hasStore == true
+            ? _optionalValue(instagramController)
+            : null,
+
+        aadhaar: hasStore == true
+            ? _optionalValue(aadhaarController)
+            : null,
+
+        pan: hasStore == true
+            ? _optionalValue(panController)
+            : null,
       );
 
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registration successful'),
-        ),
+      _showMessage(
+        context,
+        hasStore == true
+            ? 'Vendor registration successful'
+            : 'Registration successful',
       );
 
       Navigator.pushReplacementNamed(
@@ -96,15 +201,43 @@ class RegisterLogic {
     } catch (e) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().replaceFirst('Exception: ', ''),
-          ),
-        ),
+      _showMessage(
+        context,
+        e.toString().replaceFirst('Exception: ', ''),
       );
     }
   }
+
+  // =========================================================
+  // HELPERS
+  // =========================================================
+
+  String? _optionalValue(
+      TextEditingController controller,
+      ) {
+    final value = controller.text.trim();
+
+    if (value.isEmpty) {
+      return null;
+    }
+
+    return value;
+  }
+
+  void _showMessage(
+      BuildContext context,
+      String message,
+      ) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
+
+  // =========================================================
+  // DISPOSE
+  // =========================================================
 
   void dispose() {
     emailController.dispose();
@@ -112,5 +245,15 @@ class RegisterLogic {
     confirmPasswordController.dispose();
     fullNameController.dispose();
     phoneNumberController.dispose();
+
+    storeNameController.dispose();
+    businessDescriptionController.dispose();
+    addressController.dispose();
+    cityController.dispose();
+    stateController.dispose();
+    pincodeController.dispose();
+    instagramController.dispose();
+    aadhaarController.dispose();
+    panController.dispose();
   }
 }

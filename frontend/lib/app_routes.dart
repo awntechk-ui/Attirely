@@ -5,6 +5,7 @@ import 'Common_Screens/UI/register.dart';
 import 'User/U_Ui/home.dart';
 import 'Vendor/V_Ui/vendor_add_outfit.dart';
 import 'Vendor/V_Ui/vendor_dashboard.dart';
+import 'Vendor/V_Ui/vendor_profile.dart';
 import 'Vendor/V_Ui/vendor_register.dart';
 import 'User/U_Ui/profile.dart';
 
@@ -16,6 +17,7 @@ class AppRoutes {
   static const String vendorDashboard = '/vendor-dashboard';
   static const String vendorAddOutfit = '/vendor-add-outfit';
   static const String profile = '/profile';
+  static const String vendorProfile = '/vendor-profile';
 
   static final Map<String, WidgetBuilder> routes = {
     login: (context) => const LoginPage(),
@@ -25,6 +27,6 @@ class AppRoutes {
     vendorDashboard: (context) => const VendorDashboardPage(),
     vendorAddOutfit: (context) => const VendorAddOutfitPage(),
     profile: (context) => const ProfilePage(),
-
+    vendorProfile: (context) => const VendorProfilePage(),
   };
 }
