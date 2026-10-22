@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../auth_api_routes.dart';
+import '../API_Routes/auth_api_routes.dart';
 import '../session_manager.dart';
 import '../../app_routes.dart';
 
@@ -92,7 +92,7 @@ class LoginLogic {
       if (role == 'user') {
         Navigator.pushReplacementNamed(
           context,
-          AppRoutes.home,
+          AppRoutes.userMain,
         );
         return;
       }
@@ -100,7 +100,7 @@ class LoginLogic {
       if (role == 'vendor') {
         Navigator.pushReplacementNamed(
           context,
-          AppRoutes.vendorDashboard,
+          AppRoutes.vendorMain,
         );
         return;
       }

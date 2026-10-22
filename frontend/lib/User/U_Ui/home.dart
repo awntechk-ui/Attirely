@@ -304,58 +304,69 @@ class _HomePageState extends State<HomePage> {
           // BOTTOM NAVIGATION BAR
           // =========================================================
 
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: Container(
-              height: 68,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.88),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: burgundy.withOpacity(0.12),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: burgundy.withOpacity(0.12),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment:
-                MainAxisAlignment.spaceAround,
-                children: [
-                  _BottomNavItem(
-                    icon: Icons.home_outlined,
-                    label: 'Home',
-                    selected: true,
-                    onTap: () {},
-                  ),
-
-                  _BottomNavItem(
-                    icon: Icons.favorite_border,
-                    label: 'Wishlist',
-                    onTap: () {},
-                  ),
-
-                  _BottomNavItem(
-                    icon: Icons.shopping_bag_outlined,
-                    label: 'Rentals',
-                    onTap: () {},
-                  ),
-
-                  _BottomNavItem(
-                    icon: Icons.person_outline,
-                    label: 'Profile',
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // Positioned(
+          //   left: 16,
+          //   right: 16,
+          //   bottom: 16,
+          //   child: Container(
+          //     height: 68,
+          //     decoration: BoxDecoration(
+          //       color: Colors.white.withOpacity(0.88),
+          //       borderRadius: BorderRadius.circular(24),
+          //       border: Border.all(
+          //         color: burgundy.withOpacity(0.12),
+          //       ),
+          //       boxShadow: [
+          //         BoxShadow(
+          //           color: burgundy.withOpacity(0.12),
+          //           blurRadius: 20,
+          //           offset: const Offset(0, 8),
+          //         ),
+          //       ],
+          //     ),
+          //     child: Row(
+          //       mainAxisAlignment: MainAxisAlignment.spaceAround,
+          //       children: [
+          //         _BottomNavItem(
+          //           icon: Icons.home_outlined,
+          //           label: 'Home',
+          //           selected: true,
+          //           onTap: () {},
+          //         ),
+          //         _BottomNavItem(
+          //           icon: Icons.favorite_border,
+          //           label: 'Wishlist',
+          //           onTap: () {},
+          //         ),
+          //         _BottomNavItem(
+          //           icon: Icons.add_business_outlined,
+          //           label: 'Outfits',
+          //           onTap: () {
+          //             Navigator.pushNamed(
+          //               context,
+          //               AppRoutes.userOutfits,
+          //             );
+          //           },
+          //         ),
+          //         _BottomNavItem(
+          //           icon: Icons.shopping_bag_outlined,
+          //           label: 'Rentals',
+          //           onTap: () {},
+          //         ),
+          //         _BottomNavItem(
+          //           icon: Icons.person_outline,
+          //           label: 'Profile',
+          //           onTap: () {
+          //             Navigator.pushNamed(
+          //               context,
+          //               AppRoutes.profile,
+          //             );
+          //           },
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -366,59 +377,59 @@ class _HomePageState extends State<HomePage> {
 // BOTTOM NAV ITEM
 // ===============================================================
 
-class _BottomNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _BottomNavItem({
-    required this.icon,
-    required this.label,
-    this.selected = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const Color burgundy = Color(0xFF800020);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 5,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: selected
-                  ? burgundy
-                  : burgundy.withOpacity(0.55),
-              size: 23,
-            ),
-
-            const SizedBox(height: 3),
-
-            Text(
-              label,
-              style: TextStyle(
-                color: selected
-                    ? burgundy
-                    : burgundy.withOpacity(0.55),
-                fontSize: 10,
-                fontWeight: selected
-                    ? FontWeight.w600
-                    : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// class _BottomNavItem extends StatelessWidget {
+//   final IconData icon;
+//   final String label;
+//   final bool selected;
+//   final VoidCallback onTap;
+//
+//   const _BottomNavItem({
+//     required this.icon,
+//     required this.label,
+//     this.selected = false,
+//     required this.onTap,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     const Color burgundy = Color(0xFF800020);
+//
+//     return InkWell(
+//       onTap: onTap,
+//       borderRadius: BorderRadius.circular(18),
+//       child: Padding(
+//         padding: const EdgeInsets.symmetric(
+//           horizontal: 10,
+//           vertical: 5,
+//         ),
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Icon(
+//               icon,
+//               color: selected
+//                   ? burgundy
+//                   : burgundy.withOpacity(0.55),
+//               size: 23,
+//             ),
+//
+//             const SizedBox(height: 3),
+//
+//             Text(
+//               label,
+//               style: TextStyle(
+//                 color: selected
+//                     ? burgundy
+//                     : burgundy.withOpacity(0.55),
+//                 fontSize: 10,
+//                 fontWeight: selected
+//                     ? FontWeight.w600
+//                     : FontWeight.normal,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }

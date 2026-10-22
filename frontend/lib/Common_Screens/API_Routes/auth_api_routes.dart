@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../../app_config.dart';
+import '../../../app_config.dart';
 
 class AuthApiRoutes {
   // =========================

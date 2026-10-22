@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../V_Ui_Logic/add_outfit_logic.dart';
+import '../UI_Logic/add_outfit_logic.dart';
 
-class VendorAddOutfitPage extends StatefulWidget {
-  const VendorAddOutfitPage({super.key});
+class AddOutfit extends StatefulWidget {
+  const AddOutfit({super.key});
 
   @override
-  State<VendorAddOutfitPage> createState() =>
-      _VendorAddOutfitPageState();
+  State<AddOutfit> createState() =>
+      _AddOutfitState();
 }
 
-class _VendorAddOutfitPageState
-    extends State<VendorAddOutfitPage> {
+class _AddOutfitState
+    extends State<AddOutfit> {
   late final AddOutfitLogic logic;
 
   static const Color burgundy = Color(0xFF800020);

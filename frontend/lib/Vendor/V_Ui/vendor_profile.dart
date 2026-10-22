@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../V_Ui_Logic/vendor_profile_logic.dart';
 
 
-class VendorProfilePage extends StatefulWidget {
-  const VendorProfilePage({super.key});
+class VendorProfile extends StatefulWidget {
+  const VendorProfile({super.key});
 
   @override
-  State<VendorProfilePage> createState() => _VendorProfilePageState();
+  State<VendorProfile> createState() => _VendorProfileState();
 }
 
-class _VendorProfilePageState extends State<VendorProfilePage> {
+class _VendorProfileState extends State<VendorProfile> {
   final VendorProfileLogic logic = VendorProfileLogic();
 
   static const Color burgundy = Color(0xFF6B1E2E);

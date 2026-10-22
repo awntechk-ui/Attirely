@@ -3,23 +3,22 @@ import 'package:flutter/material.dart';
 import '../../app_routes.dart';
 import '../V_Ui_Logic/dashboard_logic.dart';
 
-class VendorDashboardPage extends StatefulWidget {
-  const VendorDashboardPage({super.key});
+class VendorDashboard extends StatefulWidget {
+  const VendorDashboard({super.key});
 
   @override
-  State<VendorDashboardPage> createState() =>
-      _VendorDashboardPageState();
+  State<VendorDashboard> createState() =>
+      _VendorDashboardState();
 }
 
-class _VendorDashboardPageState
-    extends State<VendorDashboardPage> {
+class _VendorDashboardState
+    extends State<VendorDashboard> {
   late final DashboardLogic logic;
 
   static const Color burgundy = Color(0xFF8E2945);
   static const Color gold = Color(0xFFD4AF37);
   static const Color pageWhite = Color(0xFFFDF9F5);
 
-  int selectedIndex = 0;
 
   @override
   void initState() {
@@ -83,13 +82,6 @@ class _VendorDashboardPageState
                 );
               },
             ),
-          ),
-
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: _buildBottomNavigation(),
           ),
         ],
       ),
@@ -159,6 +151,10 @@ class _VendorDashboardPageState
             GestureDetector(
               onTap: () {
                 // Vendor profile will be connected later.
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.vendorProfile,
+                );
               },
               child: Container(
                 width: 42,
@@ -314,7 +310,7 @@ class _VendorDashboardPageState
                 onTap: () async {
                   final result = await Navigator.pushNamed(
                     context,
-                    AppRoutes.vendorAddOutfit,
+                    AppRoutes.addOutfit,
                   );
 
                   if (result == true) {
@@ -337,77 +333,6 @@ class _VendorDashboardPageState
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildBottomNavigation() {
-    final items = [
-      (
-      icon: Icons.dashboard_outlined,
-      selectedIcon: Icons.dashboard_rounded,
-      label: 'Dashboard',
-      ),
-      (
-      icon: Icons.checkroom_outlined,
-      selectedIcon: Icons.checkroom_rounded,
-      label: 'Outfits',
-      ),
-      (
-      icon: Icons.assignment_outlined,
-      selectedIcon: Icons.assignment_rounded,
-      label: 'Requests',
-      ),
-      (
-      icon: Icons.shopping_bag_outlined,
-      selectedIcon: Icons.shopping_bag_rounded,
-      label: 'Bookings',
-      ),
-      (
-      icon: Icons.person_outline_rounded,
-      selectedIcon: Icons.person_rounded,
-      label: 'Profile',
-      ),
-    ];
-
-    return Container(
-      height: 68,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.90),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: burgundy.withOpacity(0.10),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: burgundy.withOpacity(0.12),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment:
-        MainAxisAlignment.spaceAround,
-        children: List.generate(
-          items.length,
-              (index) {
-            final item = items[index];
-
-            return _BottomNavItem(
-              icon: selectedIndex == index
-                  ? item.selectedIcon
-                  : item.icon,
-              label: item.label,
-              selected: selectedIndex == index,
-              onTap: () {
-                setState(() {
-                  selectedIndex = index;
-                });
-              },
-            );
-          },
-        ),
-      ),
     );
   }
 

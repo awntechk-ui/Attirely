@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../Common_Screens/session_manager.dart';
-import '../Vendor_API_Routes/vendor_outfit_api_routes.dart';
+import '../API_Routes/outfit_api_routes.dart';
+import '../session_manager.dart';
 
 class AddOutfitLogic extends ChangeNotifier {
   // =========================================================
@@ -352,7 +352,7 @@ class AddOutfitLogic extends ChangeNotifier {
       }
           : <String, String>{};
 
-      await VendorOutfitApiRoutes.createOutfit(
+      await OutfitApiRoutes.createOutfit(
         accessToken: accessToken,
         name: nameController.text.trim(),
         description: descriptionController.text.trim(),

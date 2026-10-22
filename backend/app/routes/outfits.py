@@ -1,6 +1,8 @@
+
+
+
 import json
 import uuid
-from typing import Optional
 from pathlib import Path
 
 from fastapi import (
@@ -12,16 +14,20 @@ from fastapi import (
     UploadFile,
 )
 
+from app.core.auth_dependency import get_current_user
 from app.core.supabase import supabase_admin as supabase
-from app.core.auth_dependency import get_current_vendor
+
 
 router = APIRouter(
-    prefix="/vendor/outfits",
-    tags=["Vendor Outfits"],
+    prefix="/outfits",
+    tags=["Outfits"],
 )
 
+BUCKET_NAME = "outfit-images"
+MAX_IMAGES = 5
+MAX_FILE_SIZE = 5 * 1024 * 1024
 
-ALLOWED_IMAGE_TYPES = {
+ALLOWED_TYPES = {
     "image/jpeg",
     "image/png",
     "image/webp",
@@ -34,44 +40,59 @@ ALLOWED_EXTENSIONS = {
     ".webp",
 }
 
-MAX_IMAGES = 5
-MAX_FILE_SIZE = 5 * 1024 * 1024
+
+def get_uploader(user_id: str):
+    """Resolve uploader role from database profiles."""
+
+    vendor = (
+        supabase.table("vendors")
+        .select("id")
+        .eq("auth_user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+
+    if vendor.data:
+        return "vendor"
+
+    user = (
+        supabase.table("users")
+        .select("id")
+        .eq("id", user_id)
+        .limit(1)
+        .execute()
+    )
+
+    if user.data:
+        return "user"
+
+    raise HTTPException(
+        status_code=403,
+        detail="No registered user or vendor profile found.",
+    )
 
 
 @router.post("")
 async def create_outfit(
     name: str = Form(...),
-    description: Optional[str] = Form(None),
-
+    description: str = Form(...),
     gender: str = Form(...),
-    brand: Optional[str] = Form(None),
-
+    brand: str | None = Form(None),
     occasion: str = Form(...),
     category: str = Form(...),
-
     rental_price: float = Form(...),
-    mrp: Optional[float] = Form(None),
+    mrp: float | None = Form(None),
     security_deposit: float = Form(...),
-
-    color_name: Optional[str] = Form(None),
-    color_hex: Optional[str] = Form(None),
-
+    color_name: str | None = Form(None),
+    color_hex: str | None = Form(None),
     size_type: str = Form("standard"),
-    sizes: Optional[str] = Form(None),
-    measurements: Optional[str] = Form(None),
-
-    material: Optional[str] = Form(None),
-    sleeve: Optional[str] = Form(None),
-
+    sizes: str = Form("[]"),
+    measurements: str = Form("{}"),
+    material: str = Form(...),
+    sleeve: str = Form(...),
     photos: list[UploadFile] = File(...),
-
-    current_vendor=Depends(get_current_vendor),
+    current_user=Depends(get_current_user),
 ):
-
-    # ============================================================
-    # 1. BASIC VALIDATION
-    # ============================================================
-
     name = name.strip()
 
     if len(name) < 2:
@@ -83,7 +104,7 @@ async def create_outfit(
     if rental_price <= 0:
         raise HTTPException(
             status_code=400,
-            detail="Rental price must be greater than 0.",
+            detail="Rental price must be greater than zero.",
         )
 
     if mrp is not None and mrp < rental_price:
@@ -98,196 +119,156 @@ async def create_outfit(
             detail="Security deposit cannot be negative.",
         )
 
-    # ============================================================
-    # 2. PHOTO VALIDATION
-    # ============================================================
-
-    if not photos:
+    if not photos or len(photos) > MAX_IMAGES:
         raise HTTPException(
             status_code=400,
-            detail="At least one outfit photo is required.",
+            detail="Upload between 1 and 5 outfit photos.",
         )
 
-    if len(photos) > MAX_IMAGES:
+    if size_type not in {"standard", "measurements"}:
         raise HTTPException(
             status_code=400,
-            detail=f"Maximum {MAX_IMAGES} photos allowed.",
+            detail="Invalid size type.",
         )
 
+    try:
+        parsed_sizes = json.loads(sizes)
+        parsed_measurements = json.loads(measurements)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid sizes or measurements JSON.",
+        )
+
+    if not isinstance(parsed_sizes, list):
+        raise HTTPException(
+            status_code=400,
+            detail="Sizes must be a JSON array.",
+        )
+
+    if not isinstance(parsed_measurements, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Measurements must be a JSON object.",
+        )
+
+    if size_type == "standard" and not parsed_sizes:
+        raise HTTPException(
+            status_code=400,
+            detail="Select at least one standard size.",
+        )
+
+    if size_type == "measurements" and not parsed_measurements:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide outfit measurements.",
+        )
+
+    user_id = str(current_user.id)
+
+    try:
+        uploader_role = get_uploader(user_id)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to verify uploader profile.",
+        )
+
+    # Validate all files before creating database records.
     for photo in photos:
-
         extension = Path(photo.filename or "").suffix.lower()
 
-        if (
-            photo.content_type not in ALLOWED_IMAGE_TYPES
-            and extension not in ALLOWED_EXTENSIONS
-        ):
+        if extension not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported image file: {photo.filename}",
+            )
+
+        if photo.content_type not in ALLOWED_TYPES:
             raise HTTPException(
                 status_code=400,
                 detail=f"Unsupported image type: {photo.filename}",
             )
 
-    # ============================================================
-    # 3. PARSE SIZES
-    # ============================================================
+        contents = await photo.read()
 
-    parsed_sizes = None
-
-    if sizes:
-
-        try:
-            parsed_sizes = json.loads(sizes)
-
-        except json.JSONDecodeError:
-
+        if not contents or len(contents) > MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=400,
-                detail="Invalid sizes format.",
+                detail="Each image must be between 1 byte and 5 MB.",
             )
 
-    # ============================================================
-    # 4. PARSE MEASUREMENTS
-    # ============================================================
-
-    parsed_measurements = None
-
-    if measurements:
-
-        try:
-            parsed_measurements = json.loads(
-                measurements
-            )
-
-        except json.JSONDecodeError:
-
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid measurements format.",
-            )
-
-    # ============================================================
-    # 5. AUTHENTICATED VENDOR
-    # ============================================================
-
-    vendor_id = current_vendor["id"]
-
-    if not vendor_id:
-        raise HTTPException(
-            status_code=401,
-            detail="Vendor authentication required.",
-        )
-
-    # ============================================================
-    # 6. CREATE OUTFIT
-    # ============================================================
+        photo.file.seek(0)
 
     outfit_id = str(uuid.uuid4())
+    uploaded_paths = []
+    outfit_created = False
 
     outfit_data = {
-
         "id": outfit_id,
-        "vendor_id": vendor_id,
-
+        "uploaded_by": user_id,
+        "role": uploader_role,
         "name": name,
-        "description": description,
-
+        "description": description.strip(),
         "gender": gender,
-        "brand": brand,
-
+        "brand": brand.strip() if brand else None,
         "occasion": occasion,
         "category": category,
-
         "rental_price": rental_price,
         "mrp": mrp,
         "security_deposit": security_deposit,
-
         "color_name": color_name,
         "color_hex": color_hex,
-
         "size_type": size_type,
         "sizes": parsed_sizes,
         "measurements": parsed_measurements,
-
         "material": material,
         "sleeve": sleeve,
-
         "status": "published",
         "is_available": True,
     }
 
-    outfit_response = (
-        supabase
-        .table("outfits")
-        .insert(outfit_data)
-        .execute()
-    )
-
-    if not outfit_response.data:
-
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to create outfit.",
+    try:
+        result = (
+            supabase.table("outfits")
+            .insert(outfit_data)
+            .execute()
         )
 
-    # ============================================================
-    # 7. UPLOAD IMAGES
-    # ============================================================
+        if not result.data:
+            raise RuntimeError("Outfit database insert failed.")
 
-    uploaded_images = []
-
-    try:
+        outfit_created = True
+        image_records = []
 
         for index, photo in enumerate(photos):
-
-            file_bytes = await photo.read()
-
-            if len(file_bytes) > MAX_FILE_SIZE:
-
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        f"{photo.filename} exceeds "
-                        f"the 5 MB limit."
-                    ),
-                )
-
-            extension = (
-                photo.filename
-                .split(".")[-1]
-                .lower()
-            )
-
+            extension = Path(photo.filename or "").suffix.lower()
             storage_path = (
-                f"{vendor_id}/"
-                f"{outfit_id}/"
-                f"{index + 1}.{extension}"
+                f"{user_id}/{outfit_id}/{index + 1}{extension}"
             )
 
-            # Upload to Supabase Storage
-            (
-                supabase
-                .storage
-                .from_("Outfit-images")
-                .upload(
-                    storage_path,
-                    file_bytes,
-                    {
-                        "content-type": photo.content_type,
-                        "upsert": "false",
-                    },
-                )
+            contents = await photo.read()
+
+            supabase.storage.from_(BUCKET_NAME).upload(
+                storage_path,
+                contents,
+                {
+                    "content-type": photo.content_type,
+                    "upsert": "false",
+                },
             )
+
+            uploaded_paths.append(storage_path)
 
             image_url = (
-                supabase
-                .storage
-                .from_("Outfit-images")
-                .get_public_url(
-                    storage_path
-                )
+                supabase.storage
+                .from_(BUCKET_NAME)
+                .get_public_url(storage_path)
             )
 
-            uploaded_images.append({
+            image_records.append({
                 "outfit_id": outfit_id,
                 "image_url": image_url,
                 "storage_path": storage_path,
@@ -295,50 +276,415 @@ async def create_outfit(
                 "is_cover": index == 0,
             })
 
-        # ========================================================
-        # 8. SAVE IMAGE RECORDS
-        # ========================================================
-
-        (
-            supabase
-            .table("Outfit-images")
-            .insert(uploaded_images)
+        image_result = (
+            supabase.table("outfit_images")
+            .insert(image_records)
             .execute()
         )
 
-    except HTTPException:
-        raise
+        if not image_result.data:
+            raise RuntimeError("Failed to save outfit images.")
 
-    except Exception as e:
+        return {
+            "success": True,
+            "message": "Outfit published successfully.",
+            "outfit_id": outfit_id,
+            "uploaded_by": user_id,
+            "role": uploader_role,
+            "images": image_result.data,
+        }
 
-        # ========================================================
-        # CLEANUP OUTFIT IF IMAGE UPLOAD FAILS
-        # ========================================================
+    except Exception as exc:
+        # Best-effort cleanup of files if any stage fails.
+        if uploaded_paths:
+            try:
+                supabase.storage.from_(BUCKET_NAME).remove(
+                    uploaded_paths
+                )
+            except Exception as cleanup_error:
+                print("STORAGE CLEANUP ERROR:", repr(cleanup_error))
 
-        try:
+        if outfit_created:
+            try:
+                supabase.table("outfits").delete().eq(
+                    "id", outfit_id
+                ).execute()
+            except Exception as cleanup_error:
+                print("OUTFIT CLEANUP ERROR:", repr(cleanup_error))
 
-            (
-                supabase
-                .table("outfits")
-                .delete()
-                .eq("id", outfit_id)
-                .execute()
-            )
-
-        except Exception:
-            pass
+        print("CREATE OUTFIT ERROR:", repr(exc))
 
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to upload outfit images: {str(e)}",
+            detail="Failed to publish outfit. Please try again.",
         )
 
-    # ============================================================
-    # 9. SUCCESS
-    # ============================================================
 
-    return {
-        "success": True,
-        "message": "Outfit published successfully.",
-        "outfit_id": outfit_id,
-    }
+@router.get("")
+async def get_my_outfits(current_user=Depends(get_current_user)):
+    """Return outfits uploaded by the authenticated vendor, with their images."""
+    user_id = str(current_user.id)
+
+    try:
+        result = (
+            supabase.table("outfits")
+            .select("*")
+            .eq("uploaded_by", user_id)
+            # .eq("role", "vendor")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        outfits = result.data or []
+
+        if not outfits:
+            return {"success": True, "count": 0, "outfits": []}
+
+        outfit_ids = [item["id"] for item in outfits if item.get("id")]
+        image_result = (
+            supabase.table("outfit_images")
+            .select("outfit_id,image_url,storage_path,display_order,is_cover")
+            .in_("outfit_id", outfit_ids)
+            .order("display_order")
+            .execute()
+        )
+        images_by_outfit = {}
+        for image in (image_result.data or []):
+            images_by_outfit.setdefault(image.get("outfit_id"), []).append(image)
+
+        for outfit in outfits:
+            images = images_by_outfit.get(outfit.get("id"), [])
+            outfit["images"] = images
+            cover = next((img for img in images if img.get("is_cover")), None)
+            if cover is None and images:
+                cover = images[0]
+            outfit["cover_image_url"] = cover.get("image_url") if cover else None
+
+        return {"success": True, "count": len(outfits), "outfits": outfits}
+
+    except Exception as exc:
+        print("GET MY OUTFITS ERROR:", repr(exc))
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to load your outfits. Please try again.",
+        )
+
+# import json
+# import uuid
+# from pathlib import Path
+
+# from fastapi import (
+#     APIRouter,
+#     Depends,
+#     File,
+#     Form,
+#     HTTPException,
+#     UploadFile,
+# )
+
+# from app.core.auth_dependency import get_current_user
+# from app.core.supabase import supabase_admin as supabase
+
+
+# router = APIRouter(
+#     prefix="/outfits",
+#     tags=["Outfits"],
+# )
+
+# BUCKET_NAME = "outfit-images"
+# MAX_IMAGES = 5
+# MAX_FILE_SIZE = 5 * 1024 * 1024
+
+# ALLOWED_TYPES = {
+#     "image/jpeg",
+#     "image/png",
+#     "image/webp",
+# }
+
+# ALLOWED_EXTENSIONS = {
+#     ".jpg",
+#     ".jpeg",
+#     ".png",
+#     ".webp",
+# }
+
+
+# def get_uploader(user_id: str):
+#     """Resolve uploader role from database profiles."""
+
+#     vendor = (
+#         supabase.table("vendors")
+#         .select("id")
+#         .eq("auth_user_id", user_id)
+#         .limit(1)
+#         .execute()
+#     )
+
+#     if vendor.data:
+#         return "vendor"
+
+#     user = (
+#         supabase.table("users")
+#         .select("id")
+#         .eq("id", user_id)
+#         .limit(1)
+#         .execute()
+#     )
+
+#     if user.data:
+#         return "user"
+
+#     raise HTTPException(
+#         status_code=403,
+#         detail="No registered user or vendor profile found.",
+#     )
+
+
+# @router.post("")
+# async def create_outfit(
+#     name: str = Form(...),
+#     description: str = Form(...),
+#     gender: str = Form(...),
+#     brand: str | None = Form(None),
+#     occasion: str = Form(...),
+#     category: str = Form(...),
+#     rental_price: float = Form(...),
+#     mrp: float | None = Form(None),
+#     security_deposit: float = Form(...),
+#     color_name: str | None = Form(None),
+#     color_hex: str | None = Form(None),
+#     size_type: str = Form("standard"),
+#     sizes: str = Form("[]"),
+#     measurements: str = Form("{}"),
+#     material: str = Form(...),
+#     sleeve: str = Form(...),
+#     photos: list[UploadFile] = File(...),
+#     current_user=Depends(get_current_user),
+# ):
+#     name = name.strip()
+
+#     if len(name) < 2:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Outfit name must contain at least 2 characters.",
+#         )
+
+#     if rental_price <= 0:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Rental price must be greater than zero.",
+#         )
+
+#     if mrp is not None and mrp < rental_price:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="MRP cannot be lower than rental price.",
+#         )
+
+#     if security_deposit < 0:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Security deposit cannot be negative.",
+#         )
+
+#     if not photos or len(photos) > MAX_IMAGES:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Upload between 1 and 5 outfit photos.",
+#         )
+
+#     if size_type not in {"standard", "measurements"}:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Invalid size type.",
+#         )
+
+#     try:
+#         parsed_sizes = json.loads(sizes)
+#         parsed_measurements = json.loads(measurements)
+#     except json.JSONDecodeError:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Invalid sizes or measurements JSON.",
+#         )
+
+#     if not isinstance(parsed_sizes, list):
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Sizes must be a JSON array.",
+#         )
+
+#     if not isinstance(parsed_measurements, dict):
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Measurements must be a JSON object.",
+#         )
+
+#     if size_type == "standard" and not parsed_sizes:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Select at least one standard size.",
+#         )
+
+#     if size_type == "measurements" and not parsed_measurements:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Provide outfit measurements.",
+#         )
+
+#     user_id = str(current_user.id)
+
+#     try:
+#         uploader_role = get_uploader(user_id)
+#     except HTTPException:
+#         raise
+#     except Exception:
+#         raise HTTPException(
+#             status_code=500,
+#             detail="Failed to verify uploader profile.",
+#         )
+
+#     # Validate all files before creating database records.
+#     for photo in photos:
+#         extension = Path(photo.filename or "").suffix.lower()
+
+#         if extension not in ALLOWED_EXTENSIONS:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail=f"Unsupported image file: {photo.filename}",
+#             )
+
+#         if photo.content_type not in ALLOWED_TYPES:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail=f"Unsupported image type: {photo.filename}",
+#             )
+
+#         contents = await photo.read()
+
+#         if not contents or len(contents) > MAX_FILE_SIZE:
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail="Each image must be between 1 byte and 5 MB.",
+#             )
+
+#         photo.file.seek(0)
+
+#     outfit_id = str(uuid.uuid4())
+#     uploaded_paths = []
+#     outfit_created = False
+
+#     outfit_data = {
+#         "id": outfit_id,
+#         "uploaded_by": user_id,
+#         "role": uploader_role,
+#         "name": name,
+#         "description": description.strip(),
+#         "gender": gender,
+#         "brand": brand.strip() if brand else None,
+#         "occasion": occasion,
+#         "category": category,
+#         "rental_price": rental_price,
+#         "mrp": mrp,
+#         "security_deposit": security_deposit,
+#         "color_name": color_name,
+#         "color_hex": color_hex,
+#         "size_type": size_type,
+#         "sizes": parsed_sizes,
+#         "measurements": parsed_measurements,
+#         "material": material,
+#         "sleeve": sleeve,
+#         "status": "published",
+#         "is_available": True,
+#     }
+
+#     try:
+#         result = (
+#             supabase.table("outfits")
+#             .insert(outfit_data)
+#             .execute()
+#         )
+
+#         if not result.data:
+#             raise RuntimeError("Outfit database insert failed.")
+
+#         outfit_created = True
+#         image_records = []
+
+#         for index, photo in enumerate(photos):
+#             extension = Path(photo.filename or "").suffix.lower()
+#             storage_path = (
+#                 f"{user_id}/{outfit_id}/{index + 1}{extension}"
+#             )
+
+#             contents = await photo.read()
+
+#             supabase.storage.from_(BUCKET_NAME).upload(
+#                 storage_path,
+#                 contents,
+#                 {
+#                     "content-type": photo.content_type,
+#                     "upsert": "false",
+#                 },
+#             )
+
+#             uploaded_paths.append(storage_path)
+
+#             image_url = (
+#                 supabase.storage
+#                 .from_(BUCKET_NAME)
+#                 .get_public_url(storage_path)
+#             )
+
+#             image_records.append({
+#                 "outfit_id": outfit_id,
+#                 "image_url": image_url,
+#                 "storage_path": storage_path,
+#                 "display_order": index,
+#                 "is_cover": index == 0,
+#             })
+
+#         image_result = (
+#             supabase.table("outfit_images")
+#             .insert(image_records)
+#             .execute()
+#         )
+
+#         if not image_result.data:
+#             raise RuntimeError("Failed to save outfit images.")
+
+#         return {
+#             "success": True,
+#             "message": "Outfit published successfully.",
+#             "outfit_id": outfit_id,
+#             "uploaded_by": user_id,
+#             "role": uploader_role,
+#             "images": image_result.data,
+#         }
+
+#     except Exception as exc:
+#         # Best-effort cleanup of files if any stage fails.
+#         if uploaded_paths:
+#             try:
+#                 supabase.storage.from_(BUCKET_NAME).remove(
+#                     uploaded_paths
+#                 )
+#             except Exception as cleanup_error:
+#                 print("STORAGE CLEANUP ERROR:", repr(cleanup_error))
+
+#         if outfit_created:
+#             try:
+#                 supabase.table("outfits").delete().eq(
+#                     "id", outfit_id
+#                 ).execute()
+#             except Exception as cleanup_error:
+#                 print("OUTFIT CLEANUP ERROR:", repr(cleanup_error))
+
+#         print("CREATE OUTFIT ERROR:", repr(exc))
+
+#         raise HTTPException(
+#             status_code=500,
+#             detail="Failed to publish outfit. Please try again.",
+#         )
+
+
+
