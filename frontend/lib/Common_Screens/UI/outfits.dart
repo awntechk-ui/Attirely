@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../UI_Logic/vendor_outfit_logic.dart';
+import '../UI_Logic/outfit_logic.dart';
+import 'outfit_details.dart';
+
+
 
 
 class Outfits extends StatefulWidget {
@@ -141,15 +144,27 @@ class _OutfitsState extends State<Outfits> {
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 9, mainAxisSpacing: 11, childAspectRatio: 0.66),
         itemCount: items.length,
-        itemBuilder: (context, index) => _OutfitCard(outfit: items[index]),
+        itemBuilder: (context, index) => _OutfitCard(
+          outfit: items[index],
+          onTap: () async {
+            final id = (items[index]['id'] ?? '').toString();
+            if (id.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('This outfit has no valid ID.')));
+              return;
+            }
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => OutfitDetails(outfitId: id)));
+            if (mounted) logic.loadOutfits();
+          },
+        ),
       ),
     );
   }
 }
 
 class _OutfitCard extends StatelessWidget {
-  const _OutfitCard({required this.outfit});
+  const _OutfitCard({required this.outfit, required this.onTap});
   final Map<String, dynamic> outfit;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +177,7 @@ class _OutfitCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFF0F0F0))),
       clipBehavior: Clip.antiAlias,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: InkWell(onTap: onTap, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
           flex: 6,
           child: Stack(fit: StackFit.expand, children: [
@@ -192,7 +207,7 @@ class _OutfitCard extends StatelessWidget {
             ]),
           ),
         ),
-      ]),
+      ]))
     );
   }
 

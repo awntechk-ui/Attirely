@@ -1,3 +1,7 @@
+
+
+
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -162,5 +166,59 @@ class OutfitApiRoutes {
 
     final detail = data['detail'] ?? data['message'] ?? 'Failed to load outfits.';
     throw Exception(detail.toString());
+  }
+
+
+  // =========================================================
+  // GET ONE OUTFIT WITH ITS ORDERED IMAGES
+  // =========================================================
+  static Future<Map<String, dynamic>> getOutfitDetails({
+    required String accessToken,
+    required String outfitId,
+  }) async {
+    final response = await http.get(
+      Uri.parse('${AppConfig.baseUrl}/outfits/${Uri.encodeComponent(outfitId)}'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Accept': 'application/json',
+      },
+    );
+    final data = _decodeResponse(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final outfit = data['outfit'];
+      if (outfit is Map) return Map<String, dynamic>.from(outfit);
+      return data;
+    }
+    throw Exception((data['detail'] ?? data['message'] ?? 'Failed to load outfit details.').toString());
+  }
+
+  // =========================================================
+  // UPDATE RENTAL AVAILABILITY
+  // =========================================================
+  static Future<bool> updateOutfitAvailability({
+    required String accessToken,
+    required String outfitId,
+    required bool isAvailable,
+  }) async {
+    final response = await http.patch(
+      Uri.parse('${AppConfig.baseUrl}/outfits/${Uri.encodeComponent(outfitId)}/availability'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'is_available': isAvailable}),
+    );
+    final data = _decodeResponse(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) return true;
+    throw Exception((data['detail'] ?? data['message'] ?? 'Failed to update availability.').toString());
+  }
+
+  static Map<String, dynamic> _decodeResponse(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    } catch (_) {}
+    return <String, dynamic>{};
   }
 }

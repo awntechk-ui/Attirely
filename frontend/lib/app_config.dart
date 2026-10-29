@@ -1,4 +1,4 @@
 class AppConfig {
   static const String baseUrl =
-      'http://10.31.232.166:8000';
+      'http://10.87.235.166:8000';
 }
