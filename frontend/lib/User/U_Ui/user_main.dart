@@ -1,9 +1,9 @@
+import 'package:attirely/User/U_Ui/user_rentals.dart';
+import 'package:attirely/User/U_Ui/user_wishlist.dart';
 import 'package:flutter/material.dart';
 
 import '../../Common_Screens/UI/outfits.dart';
 import 'home.dart';
-
-
 import 'profile.dart';
 
 class UserMain extends StatefulWidget {
@@ -21,8 +21,8 @@ class _UserMainState extends State<UserMain> {
   late final List<Widget> _pages = [
     const HomePage(),
     const Outfits(),
-    const UserWishlistPage(),
-    const UserRentalsPage(),
+    const UserWishlist(),
+    const UserRentals(),
     const ProfilePage(),
   ];
 
@@ -150,27 +150,4 @@ class _UserMainState extends State<UserMain> {
   }
 }
 
-// Temporary placeholders until these screens are implemented.
-class UserWishlistPage extends StatelessWidget {
-  const UserWishlistPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFFFF8F5),
-      body: Center(child: Text('My Wishlist')),
-    );
-  }
-}
-
-class UserRentalsPage extends StatelessWidget {
-  const UserRentalsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFFFF8F5),
-      body: Center(child: Text('My Rentals')),
-    );
-  }
-}
