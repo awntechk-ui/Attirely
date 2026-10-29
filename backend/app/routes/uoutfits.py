@@ -1,17 +1,6 @@
-import json
-import uuid
-from pathlib import Path
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    Form,
-    HTTPException,
-    UploadFile,
-)
+from fastapi import APIRouter, HTTPException
 
-from app.core.auth_dependency import get_current_user
 from app.core.supabase import supabase_admin as supabase
 
 
@@ -19,6 +8,7 @@ router = APIRouter(
     prefix="/uoutfits",
     tags=["Uoutfits"],
 )
+
 
 # ============================================================
 # CUSTOMER CATALOGUE — ALL PUBLISHED, AVAILABLE OUTFITS
@@ -28,8 +18,7 @@ router = APIRouter(
 async def get_outfit_catalogue():
     """
     Return published, available outfits uploaded by users and vendors.
-    This endpoint is separate from GET /outfits, which returns
-    only outfits belonging to the authenticated uploader.
+    Includes outfit images and the cover image URL.
     """
 
     try:
@@ -60,7 +49,7 @@ async def get_outfit_catalogue():
         image_result = (
             supabase.table("outfit_images")
             .select(
-                "outfit_id,image_url,storage_path,"
+                "id,outfit_id,image_url,storage_path,"
                 "display_order,is_cover"
             )
             .in_("outfit_id", outfit_ids)
@@ -80,11 +69,8 @@ async def get_outfit_catalogue():
 
             cover = next(
                 (image for image in images if image.get("is_cover")),
-                None,
+                images[0] if images else None,
             )
-
-            if cover is None and images:
-                cover = images[0]
 
             outfit["cover_image_url"] = (
                 cover.get("image_url") if cover else None
@@ -102,4 +88,82 @@ async def get_outfit_catalogue():
         raise HTTPException(
             status_code=500,
             detail="Failed to load the outfit catalogue.",
+        )
+
+
+# ============================================================
+# CUSTOMER — GET ONE PUBLISHED, AVAILABLE OUTFIT
+# IMPORTANT: Keep this AFTER /catalogue
+# ============================================================
+
+@router.get("/{outfit_id}")
+async def get_catalogue_outfit_details(outfit_id: str):
+    """
+    Return one published, available outfit and its ordered images.
+    """
+
+    try:
+        result = (
+            supabase.table("outfits")
+            .select("*")
+            .eq("id", outfit_id)
+            .eq("status", "published")
+            .eq("is_available", True)
+            .limit(1)
+            .execute()
+        )
+
+        if not result.data:
+            raise HTTPException(
+                status_code=404,
+                detail="Outfit not found or no longer available.",
+            )
+
+        outfit = result.data[0]
+
+        image_result = (
+            supabase.table("outfit_images")
+            .select(
+                "id,outfit_id,image_url,storage_path,"
+                "display_order,is_cover"
+            )
+            .eq("outfit_id", outfit_id)
+            .order("display_order")
+            .execute()
+        )
+
+        images = image_result.data or []
+
+        images.sort(
+            key=lambda image: (
+                not image.get("is_cover", False),
+                image.get("display_order", 0),
+            )
+        )
+
+        outfit["images"] = images
+
+        cover = next(
+            (image for image in images if image.get("is_cover")),
+            images[0] if images else None,
+        )
+
+        outfit["cover_image_url"] = (
+            cover.get("image_url") if cover else None
+        )
+
+        return {
+            "success": True,
+            "outfit": outfit,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        print("GET CATALOGUE OUTFIT DETAILS ERROR:", repr(exc))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to load outfit details.",
         )
