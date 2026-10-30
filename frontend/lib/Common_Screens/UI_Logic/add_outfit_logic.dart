@@ -44,6 +44,7 @@ class AddOutfitLogic extends ChangeNotifier {
 
   final Set<String> selectedSizes = {};
 
+
   // =========================================================
   // PHOTOS
   // =========================================================
@@ -53,6 +54,24 @@ class AddOutfitLogic extends ChangeNotifier {
   final List<File> selectedPhotos = [];
 
   static const int maxPhotos = 5;
+
+  // Existing images fetched from Supabase through FastAPI
+  final List<Map<String, dynamic>> existingImages = [];
+
+  bool isLoadingOutfit = false;
+  String? loadingError;
+
+
+// Only these existing image IDs will be retained
+  List<String> get keptImageIds {
+    return existingImages
+        .map((image) => image['id'].toString())
+        .toList();
+  }
+
+  int get totalImageCount => existingImages.length + selectedPhotos.length;
+
+  bool get canAddMorePhotos => totalImageCount < maxPhotos;
 
   // =========================================================
   // STATE
@@ -159,15 +178,122 @@ class AddOutfitLogic extends ChangeNotifier {
   ];
 
   // =========================================================
+  // EDIT OUTFIT
+  // =========================================================
+
+  Future<void> loadOutfitForEditing(String outfitId) async {
+    isLoadingOutfit = true;
+    loadingError = null;
+    notifyListeners();
+
+    try {
+      final token = SessionManager.getToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Session expired. Please login again.');
+      }
+
+      final data = await OutfitApiRoutes.getOutfitDetails(
+        accessToken: token,
+        outfitId: outfitId,
+      );
+
+      // Populate text fields
+      nameController.text = data['name']?.toString() ?? '';
+      descriptionController.text = data['description']?.toString() ?? '';
+      brandController.text = data['brand']?.toString() ?? '';
+
+      rentalPriceController.text =
+          data['rental_price']?.toString() ?? '';
+
+      mrpController.text = data['mrp']?.toString() ?? '';
+
+      securityDepositController.text =
+          data['security_deposit']?.toString() ?? '';
+
+      materialController.text = data['material']?.toString() ?? '';
+
+      // Populate dropdowns
+      selectedGender = data['gender']?.toString();
+      selectedCategory = data['category']?.toString();
+      selectedOccasion = data['occasion']?.toString();
+      selectedSleeve = data['sleeve']?.toString();
+
+      // Populate color
+      selectedColorName = data['color_name']?.toString() ?? 'Rose Pink';
+
+      selectedColorHex = data['color_hex']?.toString() ?? '#D98B9C';
+
+      final hex = selectedColorHex.replaceFirst('#', '');
+
+      if (RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(hex)) {
+        selectedColor = Color(
+          int.parse('FF$hex', radix: 16),
+        );
+      }
+
+      // Populate sizes
+      sizeType = data['size_type']?.toString() ?? 'standard';
+
+      selectedSizes.clear();
+
+      final rawSizes = data['sizes'];
+
+      if (rawSizes is List) {
+        selectedSizes.addAll(
+          rawSizes.map((e) => e.toString()),
+        );
+      }
+
+      // Populate measurements
+      final measurements = data['measurements'];
+
+      if (measurements is Map) {
+        bustController.text = measurements['bust']?.toString() ?? '';
+        waistController.text = measurements['waist']?.toString() ?? '';
+        hipController.text = measurements['hip']?.toString() ?? '';
+        shoulderController.text = measurements['shoulder']?.toString() ?? '';
+        lengthController.text = measurements['length']?.toString() ?? '';
+      }
+
+      // Populate existing images
+      existingImages.clear();
+
+      final rawImages = data['images'];
+
+      if (rawImages is List) {
+        existingImages.addAll(
+          rawImages
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e)),
+        );
+      }
+
+      existingImages.sort(
+            (a, b) => ((a['display_order'] ?? 0) as num)
+            .compareTo((b['display_order'] ?? 0) as num),
+      );
+
+    } catch (e) {
+      loadingError = e.toString().replaceFirst('Exception: ', '');
+      debugPrint('LOAD OUTFIT FOR EDIT ERROR: $e');
+      rethrow;
+    } finally {
+      isLoadingOutfit = false;
+      notifyListeners();
+    }
+  }
+
+  // =========================================================
   // PHOTOS
   // =========================================================
 
   Future<void> pickPhotos() async {
-    if (selectedPhotos.length >= maxPhotos) {
+    if (!canAddMorePhotos) {
       return;
     }
 
-    final remaining = maxPhotos - selectedPhotos.length;
+    final remaining = maxPhotos - totalImageCount;
 
     final images = await _picker.pickMultiImage(
       imageQuality: 85,
@@ -190,6 +316,15 @@ class AddOutfitLogic extends ChangeNotifier {
     }
 
     selectedPhotos.removeAt(index);
+    notifyListeners();
+  }
+
+  void removeExistingImage(int index) {
+    if (index < 0 || index >= existingImages.length) {
+      return;
+    }
+
+    existingImages.removeAt(index);
     notifyListeners();
   }
 
@@ -240,8 +375,12 @@ class AddOutfitLogic extends ChangeNotifier {
   // =========================================================
 
   String? validateForm() {
-    if (selectedPhotos.isEmpty) {
+    if (totalImageCount == 0) {
       return 'Please add at least one outfit photo.';
+    }
+
+    if (totalImageCount > maxPhotos) {
+      return 'You can upload a maximum of 5 photos.';
     }
 
     if (nameController.text.trim().isEmpty) {
@@ -323,7 +462,7 @@ class AddOutfitLogic extends ChangeNotifier {
   // PUBLISH OUTFIT
   // =========================================================
 
-  Future<bool> publishOutfit() async {
+  Future<bool> publishOutfit({String? outfitId}) async {
     final error = validateForm();
 
     if (error != null) {
@@ -352,38 +491,69 @@ class AddOutfitLogic extends ChangeNotifier {
       }
           : <String, String>{};
 
-      await OutfitApiRoutes.createOutfit(
-        accessToken: accessToken,
-        name: nameController.text.trim(),
-        description: descriptionController.text.trim(),
-        gender: selectedGender!,
-        brand: brandController.text.trim().isEmpty
-            ? null
-            : brandController.text.trim(),
-        occasion: selectedOccasion!,
-        category: selectedCategory!,
-        rentalPrice: double.parse(
-          rentalPriceController.text.trim(),
-        ),
-        mrp: mrpController.text.trim().isEmpty
-            ? null
-            : double.parse(
-          mrpController.text.trim(),
-        ),
-        securityDeposit: double.parse(
-          securityDepositController.text.trim(),
-        ),
-        colorName: selectedColorName,
-        colorHex: selectedColorHex,
-        sizeType: sizeType,
-        sizes: sizeType == 'standard'
-            ? selectedSizes.toList()
-            : <String>[],
-        measurements: measurements,
-        material: materialController.text.trim(),
-        sleeve: selectedSleeve!,
-        photos: selectedPhotos,
-      );
+      if (outfitId == null) {
+        // ADD MODE
+        await OutfitApiRoutes.createOutfit(
+          accessToken: accessToken,
+          name: nameController.text.trim(),
+          description: descriptionController.text.trim(),
+          gender: selectedGender!,
+          brand: brandController.text.trim().isEmpty
+              ? null
+              : brandController.text.trim(),
+          occasion: selectedOccasion!,
+          category: selectedCategory!,
+          rentalPrice: double.parse(rentalPriceController.text.trim()),
+          mrp: mrpController.text.trim().isEmpty
+              ? null
+              : double.parse(mrpController.text.trim()),
+          securityDeposit: double.parse(
+            securityDepositController.text.trim(),
+          ),
+          colorName: selectedColorName,
+          colorHex: selectedColorHex,
+          sizeType: sizeType,
+          sizes: sizeType == 'standard'
+              ? selectedSizes.toList()
+              : <String>[],
+          measurements: measurements,
+          material: materialController.text.trim(),
+          sleeve: selectedSleeve!,
+          photos: selectedPhotos,
+        );
+      } else {
+        // EDIT MODE
+        await OutfitApiRoutes.updateOutfit(
+          accessToken: accessToken,
+          outfitId: outfitId,
+          name: nameController.text.trim(),
+          description: descriptionController.text.trim(),
+          gender: selectedGender!,
+          brand: brandController.text.trim().isEmpty
+              ? null
+              : brandController.text.trim(),
+          occasion: selectedOccasion!,
+          category: selectedCategory!,
+          rentalPrice: double.parse(rentalPriceController.text.trim()),
+          mrp: mrpController.text.trim().isEmpty
+              ? null
+              : double.parse(mrpController.text.trim()),
+          securityDeposit: double.parse(
+            securityDepositController.text.trim(),
+          ),
+          colorName: selectedColorName,
+          colorHex: selectedColorHex,
+          sizeType: sizeType,
+          sizes: sizeType == 'standard'
+              ? selectedSizes.toList()
+              : <String>[],
+          measurements: measurements,
+          material: materialController.text.trim(),
+          sleeve: selectedSleeve!,
+          keepImageIds: keptImageIds,
+          newPhotos: selectedPhotos,
+        );
+      }
 
       return true;
     } catch (e) {

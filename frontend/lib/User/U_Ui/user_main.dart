@@ -19,7 +19,13 @@ class _UserMainState extends State<UserMain> {
   int _currentIndex = 0;
 
   late final List<Widget> _pages = [
-    const HomePage(),
+    HomePage(
+      onOpenTab: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+    ),
     const Outfits(),
     const UserWishlist(),
     const UserRentals(),

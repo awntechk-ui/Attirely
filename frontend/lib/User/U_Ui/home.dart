@@ -180,10 +180,7 @@ class _HomePageState extends State<HomePage> {
                         // OWNER BANNER
                         GestureDetector(
                           onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              AppRoutes.userOutfits,
-                            );
+                            widget.onOpenTab?.call(1);
                           },
                           child: Container(
                             width: double.infinity,
@@ -279,7 +276,7 @@ class _HomePageState extends State<HomePage> {
                           // Switch to Rentals through the main navigation.
                           // This callback will be connected in Step 3.
                           onViewMore: () {
-                            widget.onOpenTab?.call(1);
+                            widget.onOpenTab?.call(3);
                           },                        ),
 
                         const SizedBox(height: 28),

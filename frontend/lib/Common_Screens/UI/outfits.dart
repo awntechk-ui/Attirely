@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../app_routes.dart';
 import '../UI_Logic/outfit_logic.dart';
 import 'outfit_details.dart';
-
-
 
 
 class Outfits extends StatefulWidget {
@@ -86,6 +85,52 @@ class _OutfitsState extends State<Outfits> {
             ),
             const SizedBox(height: 10),
             Expanded(child: _buildBody()),
+            // Floating-style action sits above the app's shared bottom navigation.
+            // Add Catalog button - positioned above floating bottom navigation
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 110),
+              child: Material(
+                color: burgundy,
+                elevation: 7,
+                borderRadius: BorderRadius.circular(18),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.addOutfit);
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_circle_outline,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          'Add Outfit to Catalog',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -127,14 +172,104 @@ class _OutfitsState extends State<Outfits> {
     }
     final items = logic.filteredOutfits;
     if (items.isEmpty) {
+      if (logic.outfits.isEmpty) {
+        return RefreshIndicator(
+          onRefresh: logic.loadOutfits,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 20),
+              UserOutfitsEmptyContent(),
+            ],
+          ),
+        );
+      }
+
+      if (items.isEmpty) {
+        return const Center(
+          child: Text(
+            'No outfits match your search or filter.',
+            textAlign: TextAlign.center,
+          ),
+        );
+      };
+      // if (logic.outfits.isEmpty) {
+      //   // Empty catalogue design based on u_myoutfits.dart.
+      //   return RefreshIndicator(
+      //     onRefresh: logic.loadOutfits,
+      //     child: ListView(
+      //       physics: const AlwaysScrollableScrollPhysics(),
+      //       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      //       children: [
+      //         const SizedBox(height: 22),
+      //         Center(
+      //           child: Container(
+      //             padding: const EdgeInsets.all(24),
+      //             decoration: BoxDecoration(
+      //               color: burgundy.withOpacity(0.07),
+      //               shape: BoxShape.circle,
+      //             ),
+      //             child: const Icon(
+      //               Icons.checkroom_outlined,
+      //               size: 62,
+      //               color: burgundy,
+      //             ),
+      //           ),
+      //         ),
+      //         const SizedBox(height: 20),
+      //         const Text(
+      //           'No outfits listed yet',
+      //           textAlign: TextAlign.center,
+      //           style: TextStyle(
+      //             fontSize: 20,
+      //             fontWeight: FontWeight.w700,
+      //             color: burgundy,
+      //           ),
+      //         ),
+      //         const SizedBox(height: 8),
+      //         const Text(
+      //           'Your wardrobe, your earnings. Add your first outfit to your catalog and start renting.',
+      //           textAlign: TextAlign.center,
+      //           style: TextStyle(color: Colors.black54, height: 1.45),
+      //         ),
+      //         const SizedBox(height: 22),
+      //         Center(
+      //           child: ElevatedButton.icon(
+      //             onPressed: () => Navigator.pushNamed(context, AppRoutes.addOutfit),
+      //             icon: const Icon(Icons.add),
+      //             label: const Text('Add to Catalog'),
+      //             style: ElevatedButton.styleFrom(
+      //               backgroundColor: burgundy,
+      //               foregroundColor: Colors.white,
+      //               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      //               shape: RoundedRectangleBorder(
+      //                 borderRadius: BorderRadius.circular(14),
+      //               ),
+      //             ),
+      //           ),
+      //         ),
+      //       ],
+      //     ),
+      //   );
+      // }
+
       return RefreshIndicator(
         onRefresh: logic.loadOutfits,
-        child: ListView(physics: const AlwaysScrollableScrollPhysics(), children: [
-          const SizedBox(height: 100),
-          Icon(logic.outfits.isEmpty ? Icons.checkroom_outlined : Icons.search_off, size: 52, color: Colors.grey.shade400),
-          const SizedBox(height: 12),
-          Center(child: Text(logic.outfits.isEmpty ? 'You have not uploaded any outfits yet.' : 'No outfits match your search or filter.', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey))),
-        ]),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 100),
+            Icon(Icons.search_off, size: 52, color: Colors.grey.shade400),
+            const SizedBox(height: 12),
+            const Center(
+              child: Text(
+                'No outfits match your search or filter.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          ],
+        ),
       );
     }
     return RefreshIndicator(
@@ -175,39 +310,39 @@ class _OutfitCard extends StatelessWidget {
     final category = (outfit['category'] ?? '').toString();
 
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFF0F0F0))),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(onTap: onTap, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-          flex: 6,
-          child: Stack(fit: StackFit.expand, children: [
-            imageUrl.isNotEmpty && imageUrl != 'null'
-                ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _imagePlaceholder())
-                : _imagePlaceholder(),
-            Positioned(top: 8, right: 8, child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.94), borderRadius: BorderRadius.circular(6)),
-              child: Text(available ? 'Available' : 'Unavailable', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: available ? const Color(0xFF21834B) : const Color(0xFFD34A4A))),
-            )),
-          ]),
-        ),
-        Expanded(
-          flex: 4,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(9, 8, 8, 7),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, height: 1.15)),
-              if (category.isNotEmpty) ...[
-                const SizedBox(height: 3),
-                Text(category, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-              ],
-              const Spacer(),
-              Text('₹${_formatPrice(price)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-              const Text('per rental', style: TextStyle(fontSize: 9, color: Colors.grey)),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFF0F0F0))),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(onTap: onTap, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            flex: 6,
+            child: Stack(fit: StackFit.expand, children: [
+              imageUrl.isNotEmpty && imageUrl != 'null'
+                  ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _imagePlaceholder())
+                  : _imagePlaceholder(),
+              Positioned(top: 8, right: 8, child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.94), borderRadius: BorderRadius.circular(6)),
+                child: Text(available ? 'Available' : 'Unavailable', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: available ? const Color(0xFF21834B) : const Color(0xFFD34A4A))),
+              )),
             ]),
           ),
-        ),
-      ]))
+          Expanded(
+            flex: 4,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(9, 8, 8, 7),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, height: 1.15)),
+                if (category.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(category, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                ],
+                const Spacer(),
+                Text('₹${_formatPrice(price)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                const Text('per rental', style: TextStyle(fontSize: 9, color: Colors.grey)),
+              ]),
+            ),
+          ),
+        ]))
     );
   }
 
@@ -230,4 +365,64 @@ class _OutfitCard extends StatelessWidget {
     color: const Color(0xFFF4F1F1),
     child: const Center(child: Icon(Icons.checkroom, size: 42, color: Color(0xFFB8A6A8))),
   );
+}
+
+class UserOutfitsEmptyContent extends StatelessWidget {
+  const UserOutfitsEmptyContent({super.key});
+
+  static const Color burgundy = Color(0xFF800020);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: burgundy.withOpacity(0.07),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.checkroom_outlined,
+              size: 64,
+              color: burgundy,
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'No outfits listed yet',
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w600,
+              color: burgundy,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Add your first dress and start renting.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.black54),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.addOutfit,
+              );
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Outfit'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: burgundy,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../Common_Screens/UI/user_cart.dart';
 import '../U_Ui_Logic/user_cart_logic.dart';
 import '../U_Ui_Logic/user_rentals_logic.dart';
+import '../U_Ui_Logic/user_wishlist_logic.dart';
 
 
 
@@ -264,16 +265,28 @@ class _UserRentalsState extends State<UserRentals> {
     final price = _price(outfit['rental_price']);
 
     return AnimatedBuilder(
-      animation: UserCartLogic.instance,
+      animation: Listenable.merge([
+        UserCartLogic.instance,
+        UserWishlistLogic.instance,
+      ]),
       builder: (context, _) {
         final added = UserCartLogic.instance.contains(id);
+        final wishlisted = UserWishlistLogic.instance.contains(id);
 
         return Material(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
-            onTap: () => _openDetails(outfit),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RentOutfitDetails(
+                  outfitId: outfit['id'].toString(),
+                  initialOutfit: outfit,
+                ),
+              ),
+            ),
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
@@ -287,6 +300,46 @@ class _UserRentalsState extends State<UserRentals> {
                       fit: StackFit.expand,
                       children: [
                         _outfitImage(imageUrl),
+
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Material(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              tooltip: wishlisted
+                                  ? 'Remove from wishlist'
+                                  : 'Add to wishlist',
+                              constraints: const BoxConstraints(
+                                minWidth: 38,
+                                minHeight: 38,
+                              ),
+                              padding: EdgeInsets.zero,
+                              icon: Icon(
+                                wishlisted ? Icons.favorite : Icons.favorite_border,
+                                color: wishlisted
+                                    ? const Color(0xFF8B1E2D)
+                                    : Colors.grey.shade700,
+                                size: 21,
+                              ),
+                              onPressed: () {
+                                UserWishlistLogic.instance.toggleOutfit(outfit);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      wishlisted
+                                          ? '$name removed from wishlist'
+                                          : '$name added to wishlist',
+                                    ),
+                                    duration: const Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
                         Positioned(
                           top: 8,
                           right: 8,

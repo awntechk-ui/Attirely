@@ -418,3 +418,265 @@ def update_outfit_availability(outfit_id: str, payload: dict, current_user=Depen
         print("UPDATE OUTFIT AVAILABILITY ERROR:", repr(exc))
         raise HTTPException(status_code=500, detail="Failed to update outfit availability.")
 
+
+@router.patch("/{outfit_id}")
+async def update_outfit(
+    outfit_id: str,
+    name: str = Form(...),
+    description: str = Form(...),
+    gender: str = Form(...),
+    brand: str | None = Form(None),
+    occasion: str = Form(...),
+    category: str = Form(...),
+    rental_price: float = Form(...),
+    mrp: float | None = Form(None),
+    security_deposit: float = Form(...),
+    color_name: str | None = Form(None),
+    color_hex: str | None = Form(None),
+    size_type: str = Form("standard"),
+    sizes: str = Form("[]"),
+    measurements: str = Form("{}"),
+    material: str = Form(...),
+    sleeve: str = Form(...),
+    keep_image_ids: str = Form("[]"),
+    photos: list[UploadFile] | None = File(None),
+    current_user=Depends(get_current_user),
+):
+    user_id = str(current_user.id)
+
+    # Verify ownership
+    existing = (
+        supabase.table("outfits")
+        .select("id")
+        .eq("id", outfit_id)
+        .eq("uploaded_by", user_id)
+        .limit(1)
+        .execute()
+    )
+
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="Outfit not found.")
+
+    if len(name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Outfit name must contain at least 2 characters.")
+
+    if rental_price <= 0:
+        raise HTTPException(status_code=400, detail="Rental price must be greater than zero.")
+
+    if mrp is not None and mrp < rental_price:
+        raise HTTPException(status_code=400, detail="MRP cannot be lower than rental price.")
+
+    if security_deposit < 0:
+        raise HTTPException(status_code=400, detail="Security deposit cannot be negative.")
+
+    if size_type not in {"standard", "measurements"}:
+        raise HTTPException(status_code=400, detail="Invalid size type.")
+
+    try:
+        parsed_sizes = json.loads(sizes)
+        parsed_measurements = json.loads(measurements)
+        retained_ids = json.loads(keep_image_ids)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid image, size or measurement data.")
+
+    if not isinstance(parsed_sizes, list) or not isinstance(parsed_measurements, dict):
+        raise HTTPException(status_code=400, detail="Invalid sizes or measurements.")
+
+    if not isinstance(retained_ids, list) or not all(
+        isinstance(image_id, str) for image_id in retained_ids
+    ):
+        raise HTTPException(status_code=400, detail="Invalid retained image IDs.")
+
+    if size_type == "standard" and not parsed_sizes:
+        raise HTTPException(status_code=400, detail="Select at least one standard size.")
+
+    if size_type == "measurements" and not parsed_measurements:
+        raise HTTPException(status_code=400, detail="Provide outfit measurements.")
+
+    # Fetch existing images
+    image_result = (
+        supabase.table("outfit_images")
+        .select("id,storage_path")
+        .eq("outfit_id", outfit_id)
+        .execute()
+    )
+
+    existing_images = image_result.data or []
+    existing_ids = {str(img["id"]) for img in existing_images}
+
+    if not set(retained_ids).issubset(existing_ids):
+        raise HTTPException(status_code=400, detail="Invalid image selection.")
+
+    new_photos = photos or []
+
+    if len(retained_ids) + len(new_photos) < 1:
+        raise HTTPException(status_code=400, detail="At least one outfit image is required.")
+
+    if len(retained_ids) + len(new_photos) > MAX_IMAGES:
+        raise HTTPException(status_code=400, detail="Maximum 5 outfit images allowed.")
+
+    # Validate new images
+    validated_photos = []
+
+    for photo in new_photos:
+        extension = Path(photo.filename or "").suffix.lower()
+
+        if extension not in ALLOWED_EXTENSIONS or photo.content_type not in ALLOWED_TYPES:
+            raise HTTPException(status_code=400, detail="Unsupported image format.")
+
+        contents = await photo.read()
+
+        if not contents or len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="Each image must be between 1 byte and 5 MB.")
+
+        photo.file.seek(0)
+        validated_photos.append(photo)
+
+    uploaded_paths = []
+    inserted_image_ids = []
+
+    try:
+        # Update outfit information
+        update_data = {
+            "name": name.strip(),
+            "description": description.strip(),
+            "gender": gender,
+            "brand": brand.strip() if brand else None,
+            "occasion": occasion,
+            "category": category,
+            "rental_price": rental_price,
+            "mrp": mrp,
+            "security_deposit": security_deposit,
+            "color_name": color_name,
+            "color_hex": color_hex,
+            "size_type": size_type,
+            "sizes": parsed_sizes,
+            "measurements": parsed_measurements,
+            "material": material,
+            "sleeve": sleeve,
+        }
+
+        updated = (
+            supabase.table("outfits")
+            .update(update_data)
+            .eq("id", outfit_id)
+            .eq("uploaded_by", user_id)
+            .execute()
+        )
+
+        if not updated.data:
+            raise RuntimeError("Outfit update failed.")
+
+        # Remove images not retained
+        removed_images = [
+            img for img in existing_images
+            if str(img["id"]) not in retained_ids
+        ]
+
+        # Upload new images
+        next_order = 0
+        new_records = []
+
+        for index, photo in enumerate(validated_photos):
+            extension = Path(photo.filename or "").suffix.lower()
+            storage_path = (
+                f"{user_id}/{outfit_id}/{uuid.uuid4()}{extension}"
+            )
+
+            contents = await photo.read()
+
+            supabase.storage.from_(BUCKET_NAME).upload(
+                storage_path,
+                contents,
+                {
+                    "content-type": photo.content_type,
+                    "upsert": "false",
+                },
+            )
+
+            uploaded_paths.append(storage_path)
+
+            image_url = supabase.storage.from_(BUCKET_NAME).get_public_url(storage_path)
+
+            new_records.append({
+                "outfit_id": outfit_id,
+                "image_url": image_url,
+                "storage_path": storage_path,
+                "display_order": len(retained_ids) + index,
+                "is_cover": len(retained_ids) == 0 and index == 0,
+            })
+
+        if new_records:
+            inserted = (
+                supabase.table("outfit_images")
+                .insert(new_records)
+                .execute()
+            )
+
+            if not inserted.data:
+                raise RuntimeError("Failed to save new images.")
+
+            inserted_image_ids = [img["id"] for img in inserted.data]
+
+        # Delete removed image records and storage files
+        removed_ids = [img["id"] for img in removed_images]
+        removed_paths = [
+            img["storage_path"] for img in removed_images
+            if img.get("storage_path")
+        ]
+
+        if removed_ids:
+            supabase.table("outfit_images").delete().in_(
+                "id", removed_ids
+            ).eq("outfit_id", outfit_id).execute()
+
+        if removed_paths:
+            supabase.storage.from_(BUCKET_NAME).remove(removed_paths)
+
+        # Reorder retained and new images
+        final_images = (
+            supabase.table("outfit_images")
+            .select("id")
+            .eq("outfit_id", outfit_id)
+            .execute()
+        )
+
+        final_ids = [img["id"] for img in final_images.data or []]
+
+        for index, image_id in enumerate(final_ids):
+            supabase.table("outfit_images").update({
+                "display_order": index,
+                "is_cover": index == 0,
+            }).eq("id", image_id).eq("outfit_id", outfit_id).execute()
+
+        return {
+            "success": True,
+            "message": "Outfit updated successfully.",
+            "outfit_id": outfit_id,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        print("UPDATE OUTFIT ERROR:", repr(exc))
+
+        # Clean up newly uploaded files if the operation fails
+        if uploaded_paths:
+            try:
+                supabase.storage.from_(BUCKET_NAME).remove(uploaded_paths)
+            except Exception as cleanup_error:
+                print("UPDATE CLEANUP ERROR:", repr(cleanup_error))
+
+        if inserted_image_ids:
+            try:
+                supabase.table("outfit_images").delete().in_(
+                    "id", inserted_image_ids
+                ).execute()
+            except Exception as cleanup_error:
+                print("IMAGE RECORD CLEANUP ERROR:", repr(cleanup_error))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to update outfit. Please try again.",
+        )

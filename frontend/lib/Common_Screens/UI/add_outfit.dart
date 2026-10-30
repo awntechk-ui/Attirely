@@ -3,11 +3,17 @@ import 'package:flutter/material.dart';
 import '../UI_Logic/add_outfit_logic.dart';
 
 class AddOutfit extends StatefulWidget {
-  const AddOutfit({super.key});
+  final String? outfitId;
+
+  const AddOutfit({
+    super.key,
+    this.outfitId,
+  });
+
+  bool get isEditMode => outfitId != null;
 
   @override
-  State<AddOutfit> createState() =>
-      _AddOutfitState();
+  State<AddOutfit> createState() => _AddOutfitState();
 }
 
 class _AddOutfitState
@@ -22,6 +28,9 @@ class _AddOutfitState
   void initState() {
     super.initState();
     logic = AddOutfitLogic();
+    if (widget.isEditMode) {
+      logic.loadOutfitForEditing(widget.outfitId!);
+    }
   }
 
   @override
@@ -38,6 +47,37 @@ class _AddOutfitState
         child: AnimatedBuilder(
           animation: logic,
           builder: (context, _) {
+            if (logic.isLoadingOutfit) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: burgundy,
+                ),
+              );
+            }
+
+            if (logic.loadingError != null) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        logic.loadingError!,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          logic.loadOutfitForEditing(widget.outfitId!);
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             return Column(
               children: [
                 _buildTopBar(),
@@ -279,10 +319,10 @@ class _AddOutfitState
               size: 19,
             ),
           ),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
-                'Add New Outfit',
+                widget.isEditMode ? 'Edit Outfit' : 'Add New Outfit',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -458,7 +498,7 @@ class _AddOutfitState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: logic.pickPhotos,
+          onTap: logic.canAddMorePhotos ? logic.pickPhotos : null,
           child: Container(
             width: double.infinity,
             height: 125,
@@ -504,38 +544,59 @@ class _AddOutfitState
             ),
           ),
         ),
-        if (logic.selectedPhotos.isNotEmpty) ...[
+        if (logic.totalImageCount > 0) ...[
           const SizedBox(height: 12),
           SizedBox(
-            height: 76,
+            height: 85,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: logic.selectedPhotos.length,
-              separatorBuilder: (_, __) =>
-              const SizedBox(width: 8),
+              itemCount: logic.totalImageCount,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
+                final isExisting = index < logic.existingImages.length;
+
+                final imageUrl = isExisting
+                    ? logic.existingImages[index]['image_url']?.toString() ?? ''
+                    : '';
+
+                final newPhotoIndex = index - logic.existingImages.length;
+
                 return Stack(
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        logic.selectedPhotos[index],
-                        width: 72,
-                        height: 72,
+                      child: isExisting
+                          ? Image.network(
+                        imageUrl,
+                        width: 76,
+                        height: 76,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                        const Icon(Icons.broken_image),
+                      )
+                          : Image.file(
+                        logic.selectedPhotos[newPhotoIndex],
+                        width: 76,
+                        height: 76,
                         fit: BoxFit.cover,
                       ),
                     ),
+
                     Positioned(
                       right: 2,
                       top: 2,
                       child: GestureDetector(
-                        onTap: () =>
-                            logic.removePhoto(index),
+                        onTap: () {
+                          if (isExisting) {
+                            logic.removeExistingImage(index);
+                          } else {
+                            logic.removePhoto(newPhotoIndex);
+                          }
+                        },
                         child: Container(
                           width: 20,
                           height: 20,
-                          decoration:
-                          const BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.black54,
                             shape: BoxShape.circle,
                           ),
@@ -547,28 +608,25 @@ class _AddOutfitState
                         ),
                       ),
                     ),
+
                     if (index == 0)
                       Positioned(
                         left: 3,
                         bottom: 3,
                         child: Container(
-                          padding:
-                          const EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 5,
                             vertical: 2,
                           ),
-                          decoration:
-                          BoxDecoration(
+                          decoration: BoxDecoration(
                             color: burgundy,
-                            borderRadius:
-                            BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
                             'Cover',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 8,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -929,55 +987,6 @@ class _AddOutfitState
     );
   }
 
-  // Widget _buildMaterialField() {
-  //   return DropdownButtonFormField<String>(
-  //     value: logic.materialController.text.isEmpty
-  //         ? null
-  //         : logic.materialController.text,
-  //     isExpanded: true,
-  //     decoration: InputDecoration(
-  //       filled: true,
-  //       fillColor: Colors.white,
-  //       contentPadding: const EdgeInsets.symmetric(
-  //         horizontal: 14,
-  //         vertical: 2,
-  //       ),
-  //       border: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(10),
-  //         borderSide:
-  //         const BorderSide(color: softBorder),
-  //       ),
-  //       enabledBorder: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(10),
-  //         borderSide:
-  //         const BorderSide(color: softBorder),
-  //       ),
-  //     ),
-  //     hint: Text(
-  //       'Select Material',
-  //       style: TextStyle(
-  //         color: Colors.grey.shade500,
-  //         fontSize: 13,
-  //       ),
-  //     ),
-  //     items: logic.materials
-  //         .map(
-  //           (material) => DropdownMenuItem<String>(
-  //         value: material,
-  //         child: Text(
-  //           material,
-  //           style: const TextStyle(fontSize: 13),
-  //         ),
-  //       ),
-  //     )
-  //         .toList(),
-  //     onChanged: (value) {
-  //       logic.materialController.text = value ?? '';
-  //       logic.notifyListeners();
-  //     },
-  //   );
-  // }
-
   Widget _buildPublishButton() {
     return SizedBox(
       width: double.infinity,
@@ -994,13 +1003,17 @@ class _AddOutfitState
           }
 
           try {
-            final success = await logic.publishOutfit();
+            final success = await logic.publishOutfit(
+              outfitId: widget.outfitId,
+            );
 
             if (!mounted) return;
 
             if (success) {
               _showMessage(
-                'Outfit published successfully.',
+                widget.isEditMode
+                    ? 'Outfit updated successfully.'
+                    : 'Outfit published successfully.',
               );
               Navigator.pop(context, true);
             }
@@ -1029,14 +1042,13 @@ class _AddOutfitState
             strokeWidth: 2,
             color: Colors.white,
           ),
-        )
-            : const Text(
-          'Publish Outfit',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
+        ) : Text(
+            widget.isEditMode ? 'Save Changes' : 'Publish Outfit',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
         ),
       ),
     );

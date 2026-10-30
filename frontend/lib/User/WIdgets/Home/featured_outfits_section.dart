@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../U_Ui/rent_outfit_details.dart';
 import 'outfit_horizontal_card.dart';
 
 class FeaturedOutfitsSection extends StatelessWidget {
@@ -162,6 +163,15 @@ class FeaturedOutfitsSection extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return OutfitHorizontalCard(
                     outfit: outfits[index],
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RentOutfitDetails(
+                          outfitId: outfits[index]['id'].toString(),
+                          initialOutfit: outfits[index],
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),

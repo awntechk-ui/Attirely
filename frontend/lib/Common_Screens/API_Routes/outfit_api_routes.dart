@@ -221,4 +221,96 @@ class OutfitApiRoutes {
     } catch (_) {}
     return <String, dynamic>{};
   }
+
+
+  static Future<void> updateOutfit({
+    required String accessToken,
+    required String outfitId,
+    required String name,
+    required String description,
+    required String gender,
+    String? brand,
+    required String occasion,
+    required String category,
+    required double rentalPrice,
+    double? mrp,
+    required double securityDeposit,
+    required String colorName,
+    required String colorHex,
+    required String sizeType,
+    required List<String> sizes,
+    required Map<String, String> measurements,
+    required String material,
+    required String sleeve,
+    required List<String> keepImageIds,
+    required List<File> newPhotos,
+  }) async {
+    final request = http.MultipartRequest(
+      'PATCH',
+      Uri.parse(
+        '${AppConfig.baseUrl}/outfits/${Uri.encodeComponent(outfitId)}',
+      ),
+    );
+
+    request.headers['Authorization'] = 'Bearer $accessToken';
+
+    request.fields.addAll({
+      'name': name,
+      'description': description,
+      'gender': gender,
+      'occasion': occasion,
+      'category': category,
+      'rental_price': rentalPrice.toString(),
+      'security_deposit': securityDeposit.toString(),
+      'color_name': colorName,
+      'color_hex': colorHex,
+      'size_type': sizeType,
+      'sizes': jsonEncode(sizes),
+      'measurements': jsonEncode(measurements),
+      'material': material,
+      'sleeve': sleeve,
+      'keep_image_ids': jsonEncode(keepImageIds),
+    });
+
+    if (brand != null && brand.trim().isNotEmpty) {
+      request.fields['brand'] = brand.trim();
+    }
+
+    if (mrp != null) {
+      request.fields['mrp'] = mrp.toString();
+    }
+
+    for (final photo in newPhotos) {
+      final mimeType = lookupMimeType(photo.path);
+
+      if (mimeType == null) {
+        throw Exception('Could not determine image type.');
+      }
+
+      final parts = mimeType.split('/');
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'photos',
+          photo.path,
+          contentType: http.MediaType(parts[0], parts[1]),
+        ),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    final data = _decodeResponse(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+
+    throw Exception(
+      (data['detail'] ?? data['message'] ?? 'Failed to update outfit.')
+          .toString(),
+    );
+  }
+
 }
