@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../Common_Screens/UI/user_cart.dart';
+import 'user_cart.dart';
 import '../U_API_Routes/u_outfit_api_routes.dart';
 import '../U_Ui_Logic/user_cart_logic.dart';
 

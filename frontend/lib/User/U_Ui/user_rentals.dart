@@ -2,7 +2,7 @@
 import 'package:attirely/User/U_Ui/rent_outfit_details.dart';
 import 'package:flutter/material.dart';
 
-import '../../Common_Screens/UI/user_cart.dart';
+import 'user_cart.dart';
 import '../U_Ui_Logic/user_cart_logic.dart';
 import '../U_Ui_Logic/user_rentals_logic.dart';
 
@@ -26,6 +26,9 @@ class _UserRentalsState extends State<UserRentals> {
     super.initState();
     logic = UserRentalsLogic();
     logic.loadOutfits();
+
+    UserCartLogic.instance.loadCart();
+
   }
 
   @override
@@ -340,18 +343,30 @@ class _UserRentalsState extends State<UserRentals> {
                           width: double.infinity,
                           height: 38,
                           child: OutlinedButton(
-                            onPressed: () {
+                            onPressed: UserCartLogic.instance.isUpdating
+                                ? null
+                                : () async {
                               if (added) {
                                 _openCart();
-                              } else {
-                                UserCartLogic.instance.addOutfit(outfit);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('$name added to cart'),
-                                    duration: const Duration(seconds: 1),
-                                  ),
-                                );
+                                return;
                               }
+
+                              final success =
+                              await UserCartLogic.instance.addOutfit(outfit);
+
+                              if (!context.mounted) return;
+
+                              final message = success
+                                  ? '$name added to cart'
+                                  : UserCartLogic.instance.errorMessage ??
+                                  'Could not add outfit to cart';
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(message),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: added
