@@ -74,7 +74,7 @@ class SplashLogic {
 
         Navigator.pushReplacementNamed(
           context,
-          AppRoutes.home,
+          AppRoutes.userMain,
         );
 
         return;
@@ -91,7 +91,7 @@ class SplashLogic {
 
         Navigator.pushReplacementNamed(
           context,
-          AppRoutes.vendorDashboard,
+          AppRoutes.vendorMain,
         );
 
         return;
