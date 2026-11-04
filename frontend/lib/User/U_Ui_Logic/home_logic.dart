@@ -9,13 +9,53 @@ import '../U_API_Routes/u_outfit_api_routes.dart';
 class HomeLogic extends ChangeNotifier {
   bool isCheckingVendor = false;
   bool isLoadingCatalogue = false;
+
   String? catalogueError;
 
   List<Map<String, dynamic>> featuredOutfits = [];
 
+  String searchQuery = '';
+
+  List<Map<String, dynamic>> get filteredOutfits {
+    if (searchQuery.trim().isEmpty) {
+      return featuredOutfits;
+    }
+
+    final query = searchQuery.toLowerCase().trim();
+
+    return featuredOutfits.where((outfit) {
+      final searchableFields = [
+        outfit['name'],
+        outfit['title'],
+        outfit['outfit_name'],
+        outfit['category'],
+        outfit['subcategory'],
+        outfit['occasion'],
+        outfit['description'],
+        outfit['brand_name'],
+      ];
+
+      return searchableFields.any((value) {
+        return value != null &&
+            value.toString().toLowerCase().contains(query);
+      });
+    }).toList();
+  }
+
+  void updateSearch(String value) {
+    searchQuery = value;
+    notifyListeners();
+  }
+
+  void clearSearch() {
+    searchQuery = '';
+    notifyListeners();
+  }
+
   Future<void> loadCatalogue() async {
     isLoadingCatalogue = true;
     catalogueError = null;
+
     notifyListeners();
 
     try {

@@ -1,10 +1,9 @@
+import 'package:attirely/User/U_Ui/user_cart.dart';
 import 'package:attirely/User/U_Ui/user_rentals.dart';
-import 'package:attirely/User/U_Ui/user_wishlist.dart';
 import 'package:flutter/material.dart';
 
 import '../../Common_Screens/UI/outfits.dart';
 import 'home.dart';
-import 'profile.dart';
 
 class UserMain extends StatefulWidget {
   const UserMain({super.key});
@@ -27,15 +26,14 @@ class _UserMainState extends State<UserMain> {
       },
     ),
     const Outfits(),
-    const UserWishlist(),
     const UserRentals(),
-    const ProfilePage(),
+    const UserCartPage()
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F5),
+      backgroundColor: Colors.white,
       extendBody: true,
       body: Stack(
         children: [
@@ -57,13 +55,27 @@ class _UserMainState extends State<UserMain> {
                 child: Container(
                   height: 70,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.92),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: const [
+
+                    // Elegant gold border
+                    border: Border.all(
+                      color: const Color(0xFFE9D8B0),
+                      width: 1.7,
+                    ),
+
+                    // Soft floating shadow
+                    boxShadow: [
                       BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 15,
-                        offset: Offset(0, 4),
+                        color: const Color(0xFF8E2945).withOpacity(0.10),
+                        blurRadius: 18,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 5),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -78,24 +90,20 @@ class _UserMainState extends State<UserMain> {
                       ),
                       _buildNavItem(
                         icon: Icons.checkroom_outlined,
-                        label: 'Outfits',
+                        label: ' My Outfits',
                         index: 1,
-                      ),
-                      _buildNavItem(
-                        icon: Icons.favorite_border,
-                        label: 'Wishlist',
-                        index: 2,
                       ),
                       _buildNavItem(
                         icon: Icons.shopping_bag_outlined,
                         label: 'Rentals',
-                        index: 3,
+                        index: 2,
                       ),
                       _buildNavItem(
-                        icon: Icons.person_outline,
-                        label: 'Profile',
-                        index: 4,
+                        icon: Icons.shopping_cart_outlined,
+                        label: 'Cart',
+                        index: 3,
                       ),
+
                     ],
                   ),
                 ),
@@ -155,5 +163,3 @@ class _UserMainState extends State<UserMain> {
     );
   }
 }
-
-

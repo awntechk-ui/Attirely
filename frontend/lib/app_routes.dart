@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'Common_Screens/UI/add_outfit.dart';
 import 'Common_Screens/UI/login.dart';
 import 'Common_Screens/UI/register.dart';
+import 'User/U_Ui/rent_outfit_details.dart';
 import 'User/U_Ui/user_cart.dart';
 import 'User/U_Ui/home.dart';
 import 'User/U_Ui/user_main.dart';
@@ -31,6 +32,7 @@ class AppRoutes {
 
   static const String userRentals = '/user-rentals';
   static const String userCart = '/user-cart';
+  static const String outfitDetails = '/outfit-details';
 
 
   static final Map<String, WidgetBuilder> routes = {
@@ -49,6 +51,14 @@ class AppRoutes {
 
     userRentals: (context) => const UserRentals(),
     userCart: (context) => const UserCartPage(),
+    outfitDetails: (context) {
+      final args = ModalRoute.of(context)!.settings.arguments
+      as Map<String, dynamic>;
 
+      return RentOutfitDetails(
+        outfitId: args['outfitId'].toString(),
+        initialOutfit: args['initialOutfit'] as Map<String, dynamic>?,
+      );
+    },
   };
 }

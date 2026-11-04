@@ -92,10 +92,10 @@ class RegisterLogic {
       return;
     }
 
-    if (password.length < 8) {
+    if (password.length < 6) {
       _showMessage(
         context,
-        'Password must be at least 8 characters',
+        'Password must be at least 6 characters',
       );
       return;
     }

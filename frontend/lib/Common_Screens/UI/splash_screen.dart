@@ -1,3 +1,4 @@
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -5,8 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../UI_Logic/splash_logic.dart';
-import 'login.dart';
-
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,79 +15,44 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  // ================================================================
-  // CURRENT SPLASH PAGE
-  // ================================================================
-
-  int _currentPage = 0;
-
   Timer? _pageTimer;
+
   final SplashLogic _logic = SplashLogic();
 
-  // ================================================================
-  // SPLASH IMAGES
-  // ================================================================
+  // Single splash image
+  static const String _splashImage =
+      'assets/background/splash_bg.png';
 
-  final List<String> _splashImages = [
-    'assets/background/splash_background.png',
-    'assets/background/casual_outfit_bg.png',
-  ];
+  // Attirely brand colours
+  static const Color _champagne = Color(0xFFE5C5A2);
+  static const Color _gold = Color(0xFFD6B477);
+  static const Color _burgundy = Color(0xFF641C32);
+  static const Color _rosegold = Color(0xFFE8C5B0);
+  static const Color _white = Color(0xFFFFFFFF);
+
 
   @override
   void initState() {
     super.initState();
 
-    // ================================================================
-    // REAL DEVICE STATUS BAR
-    // ================================================================
-
+    // System UI styling
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-
-        // Android
         statusBarIconBrightness: Brightness.light,
-
-        // iOS
         statusBarBrightness: Brightness.dark,
-
         systemNavigationBarColor: Colors.transparent,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
     );
 
-    // ================================================================
-    // SPLASH PAGE TIMER
-    //
-    // Page 1 -> 2 seconds
-    // Page 2 -> 2 seconds
-    // Then -> LoginPage
-    // ================================================================
-
-    _pageTimer = Timer.periodic(
+    // Show the single splash image for 5 seconds.
+    // Then check session and navigate.
+    _pageTimer = Timer(
       const Duration(seconds: 5),
-          (timer) {
+          () {
         if (!mounted) return;
-
-        // ------------------------------------------------------------
-        // PAGE 1 -> PAGE 2
-        // ------------------------------------------------------------
-
-        if (_currentPage == 0) {
-          setState(() {
-            _currentPage = 1;
-          });
-        }
-
-        // ------------------------------------------------------------
-        // PAGE 2 -> LOGIN
-        // ------------------------------------------------------------
-
-        else {
-          timer.cancel();
-
-          _logic.checkSession(context);
-        }
+        _logic.checkSession(context);
       },
     );
   }
@@ -103,7 +67,6 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-
       extendBodyBehindAppBar: true,
 
       body: LayoutBuilder(
@@ -111,59 +74,54 @@ class _SplashScreenState extends State<SplashScreen> {
           final width = constraints.maxWidth;
           final height = constraints.maxHeight;
 
+          final horizontalPadding = width * 0.095;
+
+          final headingSize =
+          (width * 0.145).clamp(48.0, 66.0).toDouble();
+
+          final brandSize =
+          (width * 0.105).clamp(36.0, 48.0).toDouble();
+
+          final logoSize =
+          (width * 0.19).clamp(65.0, 88.0).toDouble();
+
           return Stack(
             fit: StackFit.expand,
             children: [
 
-              // ==========================================================
-              // BACKGROUND IMAGE
-              // ==========================================================
+              // =========================================
+              // SINGLE BACKGROUND IMAGE
+              // =========================================
 
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 700),
-
-                switchInCurve: Curves.easeInOut,
-                switchOutCurve: Curves.easeInOut,
-
-                child: Image.asset(
-                  _splashImages[_currentPage],
-
-                  key: ValueKey(
-                    _splashImages[_currentPage],
-                  ),
-
-                  width: width,
-                  height: height,
-
-                  fit: BoxFit.cover,
-
-                  alignment: Alignment.center,
-                ),
+              Image.asset(
+                _splashImage,
+                width: width,
+                height: height,
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
               ),
 
-              // ==========================================================
-              // MAIN DARK GRADIENT
-              //
-              // Bottom Left -> Center
-              // ==========================================================
+              // =========================================
+              // EDITORIAL DARK OVERLAY
+              // =========================================
 
               Positioned.fill(
                 child: IgnorePointer(
-                  child: Container(
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.bottomLeft,
-                        end: Alignment.center,
-
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withOpacity(0.82),
-                          Colors.black.withOpacity(0.48),
-                          Colors.transparent,
+                          Colors.black.withOpacity(0.30),
+                          Colors.black.withOpacity(0.12),
+                          Colors.black.withOpacity(0.30),
+                          Colors.black.withOpacity(0.70),
                         ],
-
                         stops: const [
                           0.0,
-                          0.42,
+                          0.30,
+                          0.58,
                           1.0,
                         ],
                       ),
@@ -172,320 +130,218 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
 
-              // ==========================================================
-              // CONTENT
-              // ==========================================================
+              // =========================================
+              // MAIN CONTENT
+              // =========================================
 
               SafeArea(
-                bottom: true,
-
-                child: Stack(
-                  children: [
-
-                    // ====================================================
-                    // LOGO + BRAND NAME + TAGLINE
-                    // ====================================================
-
-                    Positioned(
-                      top: height * 0.07,
-                      left: 0,
-                      right: 0,
-
-                      child: Center(
-                        child: Column(
-                          children: [
-
-                            // ------------------------------------------------
-                            // LOGO
-                            // ------------------------------------------------
-
-                            Image.asset(
-                              'assets/logos/white_attirely_logo.png',
-
-                              width: width * 0.19,
-
-                              fit: BoxFit.contain,
-                            ),
-
-                            SizedBox(
-                              height: height * 0.006,
-                            ),
-
-                            // ------------------------------------------------
-                            // DARK GRADIENT BEHIND BRAND NAME + TAGLINE
-                            // ------------------------------------------------
-
-                            Column(
-                              children: [
-                                Text(
-                                  'Attirely',
-                                  style: GoogleFonts.cormorantGaramond(
-                                    color: Colors.white,
-                                    fontSize: width * 0.10,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.3,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.90),
-                                        blurRadius: 18,
-                                        offset: const Offset(0, 0),
-                                      ),
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.70),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 0),
-                                      ),
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.55),
-                                        blurRadius: 3,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                SizedBox(height: height * 0.007),
-
-                                Text(
-                                  'RENT. WEAR. CELEBRATE.',
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white,
-                                    fontSize: width * 0.02,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: width * 0.004,
-                                    shadows: [
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.90),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 0),
-                                      ),
-                                      Shadow(
-                                        color: Colors.black.withOpacity(0.70),
-                                        blurRadius: 5,
-                                        offset: const Offset(0, 1),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 520,
                     ),
 
-                    // ====================================================
-                    // SMALL LINE
-                    // ====================================================
-
-                    Positioned(
-                      left: width * 0.102,
-                      bottom: height * 0.38,
-
-                      child: Container(
-                        width: width * 0.20,
-                        height: 1,
-
-                        color: Colors.white.withOpacity(0.9),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                        vertical: height * 0.025,
                       ),
-                    ),
-
-                    // ====================================================
-                    // MAIN HEADING
-                    // ====================================================
-
-                    Positioned(
-                      left: width * 0.102,
-                      bottom: height * 0.205,
 
                       child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
 
                         children: [
 
-                          // ------------------------------------------------
-                          // WEAR
-                          // ------------------------------------------------
+                          // =====================================
+                          // TOP BRAND STATEMENT
+                          // GOLD BORDER
+                          // =====================================
 
-                          Text(
-                            'Wear',
-                            style: GoogleFonts.cormorantGaramond(
-                              color: Colors.white,
-                              fontSize: width * 0.122,
-                              fontWeight: FontWeight.w600,
-                              height: 1.05,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.90),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 0),
+                          const Spacer(flex: 2),
+
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 17,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.18),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: _gold.withOpacity(0.85),
+                                  width: 1,
                                 ),
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.70),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 0),
+                              ),
+                              child: Text(
+                                'A NEW WAY TO DRESS',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.dmSans(
+                                  color: _rosegold,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 3.0,
                                 ),
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.55),
-                                  blurRadius: 3,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
 
-                          // ------------------------------------------------
-                          // THE MOMENT
-                          // ------------------------------------------------
+                          SizedBox(height: height * 0.045),
 
-                          Text(
-                            'the moment.',
-                            style: GoogleFonts.cormorantGaramond(
-                              color: Colors.white,
-                              fontSize: width * 0.122,
-                              fontWeight: FontWeight.w600,
-                              height: 1.05,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.90),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 0),
-                                ),
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.70),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 0),
-                                ),
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.55),
-                                  blurRadius: 3,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                          // =====================================
+                          // ATTIRELY LOGO IMAGE
+                          // =====================================
+
+                          Center(
+                            child: Image.asset(
+                              'assets/logos/white_attirely_logo.png',
+                              width: logoSize,
+                              height: logoSize,
+                              fit: BoxFit.contain,
                             ),
                           ),
+
+                          const SizedBox(height: 5),
+
+                          // =====================================
+                          // ATTIRELY BRAND NAME
+                          // BOLD AND ELEGANT
+                          // =====================================
+
+                          Center(
+                            child: Text(
+                              'Attirely',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.cormorantGaramond(
+                                fontSize: brandSize,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 2.8,
+                                height: 1.05,
+                                color: _white,
+                                shadows: [
+                                  Shadow(
+                                    color: _gold.withOpacity(0.40),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(height: height * 0.065),
+
+                          // =====================================
+                          // WEAR THE MOMENT
+                          // BOLD EDITORIAL TYPOGRAPHY
+                          // =====================================
 
                           SizedBox(
-                            height: height * 0.002,
+                            width: double.infinity,
+                            child: Text(
+                              'WEAR THE\nMOMENT.',
+                              textAlign: TextAlign.left,
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: brandSize,
+                                fontWeight: FontWeight.w900,
+                                height: 0.98,
+                                letterSpacing: 0.2,
+                                color: _rosegold,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.45),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
 
-                          // ------------------------------------------------
-                          // NOT THE PRICE TAG
-                          // ------------------------------------------------
+                          const SizedBox(height: 22),
+
+                          // =====================================
+                          // EDITORIAL DIVIDER
+                          // =====================================
+
+                          Container(
+                            width: 48,
+                            height: 1,
+                            color: _champagne.withOpacity(0.9),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // =====================================
+                          // SUPPORTING BRAND STATEMENT
+                          // =====================================
 
                           Text(
                             'Not the price tag.',
-                            style: GoogleFonts.cormorantGaramond(
-                              color: const Color(0xFFE5B2A5),
-                              fontSize: width * 0.085,
-                              fontWeight: FontWeight.w500,
+                            textAlign: TextAlign.left,
+                            style: GoogleFonts.instrumentSerif(
+                              color: _white,
+                              fontSize: 28,
                               fontStyle: FontStyle.italic,
-                              height: 1.0,
+                              fontWeight: FontWeight.w400,
+                              height: 1.1,
                             ),
                           ),
+
+                          const SizedBox(height: 13),
+
+                          // =====================================
+                          // DESCRIPTION
+                          // =====================================
+
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: 285,
+                            ),
+                            child: Text(
+                              'Premium outfits for your special '
+                                  'occasions. Discover a new way to '
+                                  'dress beautifully.',
+                              textAlign: TextAlign.left,
+                              style: GoogleFonts.dmSans(
+                                color: _rosegold.withOpacity(0.91),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                height: 1.65,
+                                letterSpacing: 0.15,
+                              ),
+                            ),
+                          ),
+
+                          // =====================================
+                          // BOTTOM BRAND LINE
+                          // =====================================
+
+                          const Spacer(flex: 2),
+
+                          Center(
+                            child: Text(
+                              'RENT. WEAR. REPEAT.',
+                              style: GoogleFonts.dmSans(
+                                color: _rosegold.withOpacity(0.88),
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 2.4,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
-
-                    // ====================================================
-                    // DESCRIPTION
-                    // ====================================================
-
-                    Positioned(
-                      left: width * 0.102,
-                      bottom: height * 0.105,
-
-                      child: Text(
-                        'Premium outfits for\n'
-                            'your special occasions.',
-
-                        style: GoogleFonts.montserrat(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: width * 0.033,
-                          fontWeight: FontWeight.w400,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-
-                    // ====================================================
-                    // PAGE INDICATORS
-                    // ONLY 2
-                    // ====================================================
-
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: height * 0.052,
-
-                      child: Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.center,
-
-                        children: [
-
-                          // ----------------------------------------------
-                          // FIRST INDICATOR
-                          // ----------------------------------------------
-
-                          _indicator(
-                            active: _currentPage == 0,
-                            size: width * 0.020,
-                          ),
-
-                          SizedBox(
-                            width: width * 0.025,
-                          ),
-
-                          // ----------------------------------------------
-                          // SECOND INDICATOR
-                          // ----------------------------------------------
-
-                          _indicator(
-                            active: _currentPage == 1,
-                            size: width * 0.017,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
           );
         },
-      ),
-    );
-  }
-
-  // ================================================================
-  // INDICATOR
-  // ================================================================
-
-  Widget _indicator({
-    required bool active,
-    required double size,
-  }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-
-      width: size,
-      height: size,
-
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-
-        color: active
-            ? Colors.white
-            : Colors.transparent,
-
-        border: active
-            ? null
-            : Border.all(
-          color: Colors.white.withOpacity(0.8),
-          width: 1,
-        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../User/U_Ui_Logic/user_cart_logic.dart';
 import '../../User/U_API_Routes/u_outfit_api_routes.dart';
 import '../../User/U_Ui/rent_outfit_details.dart';
+import '../../app_routes.dart';
 import 'book_trial.dart';
 
 class UserCartPage extends StatefulWidget {
@@ -304,8 +305,14 @@ class _UserCartPageState extends State<UserCartPage> {
         title: 'Your cart is empty',
         subtitle: 'Discover beautiful outfits and add your favourites.',
         buttonText: 'Explore Outfits',
-        onPressed: () => Navigator.pop(context),
+        onPressed: () {
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.userRentals,
+          );
+        },
       );
+
     }
 
     return Stack(

@@ -50,6 +50,13 @@ class LoginLogic {
       );
       return;
     }
+    if (password.length < 6) {
+      _showMessage(
+        context,
+        'Password must be at least 6 characters',
+      );
+      return;
+    }
 
     // =======================================================
     // API CALL
