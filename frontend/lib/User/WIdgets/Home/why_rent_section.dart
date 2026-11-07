@@ -54,7 +54,7 @@ class WhyRentSection extends StatelessWidget {
             'A smarter way to dress for every occasion.',
             style: TextStyle(color: muted, fontSize: 12),
           ),
-          const SizedBox(height: 17),
+          const SizedBox(height: 5),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),

@@ -52,7 +52,7 @@ class _VendorProfileState extends State<VendorProfile> {
           // =====================================================
 
           Image.asset(
-            'assets/background/app_bg.png',
+            'assets/background/login_bg.png',
             fit: BoxFit.cover,
           ),
 

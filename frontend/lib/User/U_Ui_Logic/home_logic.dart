@@ -4,6 +4,7 @@ import 'package:attirely/Vendor/Vendor_API_Routes/vendor_auth_api_routes.dart';
 
 import '../../app_routes.dart';
 import '../../Common_Screens/session_manager.dart';
+import '../U_API_Routes/u_accessory_api_routes.dart';
 import '../U_API_Routes/u_outfit_api_routes.dart';
 
 class HomeLogic extends ChangeNotifier {
@@ -13,7 +14,10 @@ class HomeLogic extends ChangeNotifier {
   String? catalogueError;
 
   List<Map<String, dynamic>> featuredOutfits = [];
+  bool isLoadingAccessories = false;
+  String? accessoriesError;
 
+  List<Map<String, dynamic>> featuredAccessories = [];
   String searchQuery = '';
 
   List<Map<String, dynamic>> get filteredOutfits {
@@ -54,16 +58,30 @@ class HomeLogic extends ChangeNotifier {
 
   Future<void> loadCatalogue() async {
     isLoadingCatalogue = true;
+    isLoadingAccessories = true;
+
     catalogueError = null;
+    accessoriesError = null;
 
     notifyListeners();
 
+    // Load outfits
     try {
       featuredOutfits = await UOutfitApiRoutes.getCatalogue();
     } catch (e) {
       catalogueError = e.toString().replaceFirst('Exception: ', '');
     } finally {
       isLoadingCatalogue = false;
+      notifyListeners();
+    }
+
+    // Load accessories
+    try {
+      featuredAccessories = await UAccessoryApiRoutes.getCatalogue();
+    } catch (e) {
+      accessoriesError = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      isLoadingAccessories = false;
       notifyListeners();
     }
   }

@@ -1,10 +1,14 @@
 
+import 'package:attirely/Common_Screens/API_Routes/auth_api_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../app_routes.dart';
+import '../../Common_Screens/session_manager.dart';
+
 import '../U_Ui_Logic/home_logic.dart';
 import '../WIdgets/Home/categories_section.dart';
+import '../WIdgets/Home/featured_accessories.dart';
 import '../WIdgets/Home/featured_outfits_section.dart';
 import '../WIdgets/Home/home_promo_slider.dart';
 import '../WIdgets/Home/why_rent_section.dart';
@@ -25,6 +29,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late final HomeLogic logic;
 
+  String _userName = 'Attirely Member';
+
   static const Color burgundy = Color(0xFF8E2945);
   static const Color darkBurgundy = Color(0xFF4C1026);
   static const Color gold = Color(0xFFE9D8B0);
@@ -34,7 +40,7 @@ class _HomePageState extends State<HomePage> {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF8E2945),
+      Color(0xFF4C1026),
       Color(0xFF64172F),
       Color(0xFF4C1026),
     ],
@@ -43,8 +49,52 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
     logic = HomeLogic();
+
     logic.loadCatalogue();
+
+    _loadUserName();
+  }
+
+  // ==================================================
+  // LOAD LOGGED-IN USER NAME
+  // ==================================================
+
+  Future<void> _loadUserName() async {
+    try {
+      // Get saved access token.
+      String? token = SessionManager.getToken();
+
+      // If not available in memory, load from SharedPreferences.
+      token ??= await SessionManager.loadToken();
+
+      if (token == null || token.isEmpty) {
+        debugPrint('HOME: Access token not found');
+        return;
+      }
+
+      // Call existing backend /auth/session endpoint.
+      final response = await AuthApiRoutes.validateSession(
+        accessToken: token,
+      );
+
+      if (!mounted) return;
+
+      // Only use the normal user's full_name.
+      if (response['valid'] == true &&
+          response['role'] == 'user') {
+        final name = response['full_name']?.toString().trim();
+
+        if (name != null && name.isNotEmpty) {
+          setState(() {
+            _userName = name;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('HOME USER NAME ERROR: $e');
+    }
   }
 
   @override
@@ -53,9 +103,9 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // --------------------------------------------------
+  // ==================================================
   // NAVIGATION
-  // --------------------------------------------------
+  // ==================================================
 
   void _openRentals() {
     Navigator.pushNamed(context, AppRoutes.userRentals);
@@ -74,9 +124,21 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // --------------------------------------------------
+  void _showLocationMessage() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Location feature coming soon.'),
+          backgroundColor: burgundy,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  // ==================================================
   // HOME PAGE
-  // --------------------------------------------------
+  // ==================================================
 
   @override
   Widget build(BuildContext context) {
@@ -87,8 +149,19 @@ class _HomePageState extends State<HomePage> {
         statusBarBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: cream,
-        body: SafeArea(
+        backgroundColor: Colors.white,
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            color: Colors.white, // Fallback if image fails
+            image: DecorationImage(
+              image: AssetImage('assets/background/login_bg.png'),
+              fit: BoxFit.cover,
+              onError: null,
+            ),
+          ),
+          child: SafeArea(
           top: false,
           bottom: false,
           child: Column(
@@ -103,7 +176,8 @@ class _HomePageState extends State<HomePage> {
                       color: burgundy,
                       onRefresh: logic.loadCatalogue,
                       child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
+                        physics:
+                        const AlwaysScrollableScrollPhysics(),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -121,6 +195,14 @@ class _HomePageState extends State<HomePage> {
                               error: logic.catalogueError,
                               onRetry: logic.loadCatalogue,
                               onViewMore: _openRentals,
+                            ),
+                            const SizedBox(height: 28),
+
+                            FeaturedAccessories(
+                              accessories: logic.featuredAccessories,
+                              isLoading: logic.isLoadingAccessories,
+                              error: logic.accessoriesError,
+                              onRetry: logic.loadCatalogue,
                             ),
 
                             const SizedBox(height: 30),
@@ -143,13 +225,15 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+        ),
+
       ),
     );
   }
 
-  // --------------------------------------------------
+  // ==================================================
   // GRADIENT HEADER
-  // --------------------------------------------------
+  // ==================================================
 
   Widget _buildHeader() {
     final statusBarHeight = MediaQuery.of(context).padding.top;
@@ -186,29 +270,64 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(width: 11),
 
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                // const Text(
+                //   'WELCOME BACK,',
+                //   style: TextStyle(
+                //     color: Colors.white70,
+                //     fontSize: 10,
+                //     fontWeight: FontWeight.w700,
+                //     letterSpacing: 1.3,
+                //   ),
+                // ),
+                //
+                // const SizedBox(height: 3),
+
+                // DYNAMIC USER NAME
                 Text(
-                  'WELCOME BACK,',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.3,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Attirely Member',
+                  _userName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
+                  ),
+                ),
+
+                const SizedBox(height: 5),
+
+                // LOCATION - TEMPORARY CLICK ACTION
+                GestureDetector(
+                  onTap: _showLocationMessage,
+                  behavior: HitTestBehavior.opaque,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        color: Colors.white70,
+                        size: 13,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Kurnool, AP',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white70,
+                        size: 16,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -249,10 +368,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // --------------------------------------------------
+  // ==================================================
   // SEARCH LAUNCHER + PROMOTIONAL SLIDER
-  // No search logic is present here.
-  // --------------------------------------------------
+  // ==================================================
 
   Widget _buildHeroZone() {
     return Container(
@@ -325,9 +443,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // --------------------------------------------------
+  // ==================================================
   // MANAGE YOUR OUTFITS
-  // --------------------------------------------------
+  // ==================================================
 
   Widget _buildManageOutfitsBanner() {
     return Padding(
@@ -363,7 +481,9 @@ class _HomePageState extends State<HomePage> {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
+
                       const SizedBox(height: 8),
+
                       const Text(
                         'List your outfits, earn effortlessly, '
                             'and give them a new occasion.',
@@ -373,7 +493,9 @@ class _HomePageState extends State<HomePage> {
                           height: 1.4,
                         ),
                       ),
+
                       const SizedBox(height: 15),
+
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 15,
@@ -406,7 +528,9 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
+
                 const SizedBox(width: 10),
+
                 Container(
                   height: 75,
                   width: 65,

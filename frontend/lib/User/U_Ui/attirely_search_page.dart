@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../app_routes.dart';
 import '../U_Ui_Logic/home_logic.dart';
@@ -107,7 +108,6 @@ class _AttirelySearchPageState extends State<AttirelySearchPage> {
 
   List<Map<String, dynamic>> get _results {
     final all = widget.logic.featuredOutfits;
-
     final query = _query.toLowerCase().trim();
 
     final filtered = all.where((outfit) {
@@ -124,7 +124,8 @@ class _AttirelySearchPageState extends State<AttirelySearchPage> {
 
       final matchesQuery = query.isEmpty ||
           fields.any(
-                (value) => value != null &&
+                (value) =>
+            value != null &&
                 value.toString().toLowerCase().contains(query),
           );
 
@@ -135,7 +136,8 @@ class _AttirelySearchPageState extends State<AttirelySearchPage> {
             outfit['category'],
             outfit['subcategory'],
           ].any(
-                (value) => value != null &&
+                (value) =>
+            value != null &&
                 value.toString().toLowerCase().contains(category),
           );
 
@@ -206,355 +208,363 @@ class _AttirelySearchPageState extends State<AttirelySearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: cream,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // SEARCH HEADER
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    burgundy,
-                    Color(0xFF64172F),
-                    darkBurgundy,
-                  ],
-                ),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(25),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(
-                          Icons.arrow_back_rounded,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Expanded(
-                        child: Text(
-                          'Find your perfect look',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 19,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: burgundy,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: cream,
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              // SEARCH HEADER
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      burgundy,
+                      Color(0xFF64172F),
+                      darkBurgundy,
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    height: 51,
-                    decoration: BoxDecoration(
-                      color: cream,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: gold),
-                    ),
-                    child: TextField(
-                      controller: _controller,
-                      autofocus: true,
-                      onChanged: _search,
-                      style: const TextStyle(
-                        color: burgundy,
-                        fontSize: 14,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Search outfits, occasions, styles...',
-                        hintStyle: TextStyle(
-                          color: burgundy.withOpacity(0.55),
-                          fontSize: 12,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search_rounded,
-                          color: burgundy,
-                        ),
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            _controller.clear();
-                            _search('');
-                          },
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(25),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
                           icon: const Icon(
-                            Icons.close_rounded,
+                            Icons.arrow_back_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const Expanded(
+                          child: Text(
+                            'Find your perfect look',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 51,
+                      decoration: BoxDecoration(
+                        color: cream,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: gold),
+                      ),
+                      child: TextField(
+                        controller: _controller,
+                        autofocus: true,
+                        onChanged: _search,
+                        style: const TextStyle(
+                          color: burgundy,
+                          fontSize: 14,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Search outfits, occasions, styles...',
+                          hintStyle: TextStyle(
+                            color: burgundy.withOpacity(0.55),
+                            fontSize: 12,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
                             color: burgundy,
                           ),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              _controller.clear();
+                              _search('');
+                            },
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              color: burgundy,
+                            ),
+                          ),
+                          border: InputBorder.none,
                         ),
-                        border: InputBorder.none,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            Expanded(
-              child: AnimatedBuilder(
-                animation: widget.logic,
-                builder: (context, _) {
-                  if (widget.logic.isLoadingCatalogue &&
-                      widget.logic.featuredOutfits.isEmpty) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: burgundy,
-                      ),
-                    );
-                  }
-
-                  if (widget.logic.catalogueError != null &&
-                      widget.logic.featuredOutfits.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.cloud_off_rounded,
-                              color: burgundy,
-                              size: 42,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              widget.logic.catalogueError!,
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            ElevatedButton(
-                              onPressed: widget.logic.loadCatalogue,
-                              child: const Text('Try Again'),
-                            ),
-                          ],
+              Expanded(
+                child: AnimatedBuilder(
+                  animation: widget.logic,
+                  builder: (context, _) {
+                    if (widget.logic.isLoadingCatalogue &&
+                        widget.logic.featuredOutfits.isEmpty) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: burgundy,
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
 
-                  return ListView(
-                    padding: const EdgeInsets.only(
-                      top: 20,
-                      bottom: 30,
-                    ),
-                    children: [
-                      // RECENT SEARCHES
-                      if (_query.isEmpty && _recentSearches.isNotEmpty) ...[
-                        _sectionTitle('Recent Searches'),
-                        const SizedBox(height: 10),
-                        ..._recentSearches.map(
-                              (item) => ListTile(
-                            dense: true,
-                            leading: const Icon(
-                              Icons.history_rounded,
-                              color: burgundy,
-                            ),
-                            title: Text(
-                              item,
-                              style: const TextStyle(
-                                color: darkBurgundy,
-                              ),
-                            ),
-                            trailing: const Icon(
-                              Icons.north_west_rounded,
-                              size: 17,
-                              color: burgundy,
-                            ),
-                            onTap: () => _selectSearch(item),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // POPULAR SEARCHES
-                      if (_query.isEmpty) ...[
-                        _sectionTitle('Popular Searches'),
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Wrap(
-                            spacing: 9,
-                            runSpacing: 9,
-                            children: _popularSearches.map((item) {
-                              return ActionChip(
-                                label: Text(item),
-                                avatar: const Icon(
-                                  Icons.trending_up_rounded,
-                                  size: 16,
-                                  color: burgundy,
-                                ),
-                                backgroundColor: pale,
-                                side: BorderSide(
-                                  color: gold.withOpacity(0.8),
-                                ),
-                                labelStyle: const TextStyle(
-                                  color: burgundy,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                onPressed: () => _selectSearch(item),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-
-                      // CATEGORY FILTERS
-                      _sectionTitle(
-                        _query.isEmpty ? 'Explore by Category' : 'Categories',
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 39,
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _categories.length,
-                          separatorBuilder: (_, __) =>
-                          const SizedBox(width: 9),
-                          itemBuilder: (context, index) {
-                            final item = _categories[index];
-                            final selected = _selectedCategory == item;
-
-                            return ChoiceChip(
-                              label: Text(item),
-                              selected: selected,
-                              selectedColor: burgundy,
-                              backgroundColor: pale,
-                              side: BorderSide(
-                                color: selected ? burgundy : gold,
-                              ),
-                              labelStyle: TextStyle(
-                                color: selected ? Colors.white : burgundy,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              onSelected: (_) {
-                                setState(() {
-                                  _selectedCategory = item;
-                                });
-                              },
-                            );
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // RESULTS TITLE + SORT
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _query.isEmpty
-                                    ? 'Discover Outfits'
-                                    : 'Search Results (${_results.length})',
-                                style: const TextStyle(
-                                  color: darkBurgundy,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                            PopupMenuButton<String>(
-                              initialValue: _sort,
-                              icon: const Icon(
-                                Icons.tune_rounded,
-                                color: burgundy,
-                              ),
-                              onSelected: (value) {
-                                setState(() {
-                                  _sort = value;
-                                });
-                              },
-                              itemBuilder: (_) => const [
-                                PopupMenuItem(
-                                  value: 'Recommended',
-                                  child: Text('Recommended'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'Price: Low to High',
-                                  child: Text('Price: Low to High'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'Price: High to Low',
-                                  child: Text('Price: High to Low'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      if (_results.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(35),
+                    if (widget.logic.catalogueError != null &&
+                        widget.logic.featuredOutfits.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
                           child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
-                                Icons.search_off_rounded,
-                                size: 55,
+                                Icons.cloud_off_rounded,
                                 color: burgundy,
+                                size: 42,
                               ),
                               const SizedBox(height: 12),
-                              const Text(
-                                'No outfits found',
-                                style: TextStyle(
-                                  color: darkBurgundy,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Try another style, category or occasion.',
+                              Text(
+                                widget.logic.catalogueError!,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Color(0xFF92717A),
-                                  fontSize: 12,
-                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: widget.logic.loadCatalogue,
+                                child: const Text('Try Again'),
                               ),
                             ],
                           ),
-                        )
-                      else
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _results.length,
-                            gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 14,
-                              childAspectRatio: 0.64,
+                        ),
+                      );
+                    }
+
+                    return ListView(
+                      padding: const EdgeInsets.only(
+                        top: 20,
+                        bottom: 30,
+                      ),
+                      children: [
+                        // RECENT SEARCHES
+                        if (_query.isEmpty && _recentSearches.isNotEmpty) ...[
+                          _sectionTitle('Recent Searches'),
+                          const SizedBox(height: 10),
+                          ..._recentSearches.map(
+                                (item) => ListTile(
+                              dense: true,
+                              leading: const Icon(
+                                Icons.history_rounded,
+                                color: burgundy,
+                              ),
+                              title: Text(
+                                item,
+                                style: const TextStyle(
+                                  color: darkBurgundy,
+                                ),
+                              ),
+                              trailing: const Icon(
+                                Icons.north_west_rounded,
+                                size: 17,
+                                color: burgundy,
+                              ),
+                              onTap: () => _selectSearch(item),
                             ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // POPULAR SEARCHES
+                        if (_query.isEmpty) ...[
+                          _sectionTitle('Popular Searches'),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Wrap(
+                              spacing: 9,
+                              runSpacing: 9,
+                              children: _popularSearches.map((item) {
+                                return ActionChip(
+                                  label: Text(item),
+                                  avatar: const Icon(
+                                    Icons.trending_up_rounded,
+                                    size: 16,
+                                    color: burgundy,
+                                  ),
+                                  backgroundColor: pale,
+                                  side: BorderSide(
+                                    color: gold.withOpacity(0.8),
+                                  ),
+                                  labelStyle: const TextStyle(
+                                    color: burgundy,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  onPressed: () => _selectSearch(item),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+
+                        // CATEGORY FILTERS
+                        _sectionTitle(
+                          _query.isEmpty ? 'Explore by Category' : 'Categories',
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 39,
+                          child: ListView.separated(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _categories.length,
+                            separatorBuilder: (_, __) =>
+                            const SizedBox(width: 9),
                             itemBuilder: (context, index) {
-                              final outfit = _results[index];
-                              return _buildOutfitCard(outfit);
+                              final item = _categories[index];
+                              final selected = _selectedCategory == item;
+
+                              return ChoiceChip(
+                                label: Text(item),
+                                selected: selected,
+                                selectedColor: burgundy,
+                                backgroundColor: pale,
+                                side: BorderSide(
+                                  color: selected ? burgundy : gold,
+                                ),
+                                labelStyle: TextStyle(
+                                  color: selected ? Colors.white : burgundy,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                onSelected: (_) {
+                                  setState(() {
+                                    _selectedCategory = item;
+                                  });
+                                },
+                              );
                             },
                           ),
                         ),
-                    ],
-                  );
-                },
+
+                        const SizedBox(height: 24),
+
+                        // RESULTS TITLE + SORT
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _query.isEmpty
+                                      ? 'Discover Outfits'
+                                      : 'Search Results (${_results.length})',
+                                  style: const TextStyle(
+                                    color: darkBurgundy,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              PopupMenuButton<String>(
+                                initialValue: _sort,
+                                icon: const Icon(
+                                  Icons.tune_rounded,
+                                  color: burgundy,
+                                ),
+                                onSelected: (value) {
+                                  setState(() {
+                                    _sort = value;
+                                  });
+                                },
+                                itemBuilder: (_) => const [
+                                  PopupMenuItem(
+                                    value: 'Recommended',
+                                    child: Text('Recommended'),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'Price: Low to High',
+                                    child: Text('Price: Low to High'),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'Price: High to Low',
+                                    child: Text('Price: High to Low'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        if (_results.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(35),
+                            child: Column(
+                              children: [
+                                const Icon(
+                                  Icons.search_off_rounded,
+                                  size: 55,
+                                  color: burgundy,
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'No outfits found',
+                                  style: TextStyle(
+                                    color: darkBurgundy,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'Try another style, category or occasion.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Color(0xFF92717A),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _results.length,
+                              gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 14,
+                                childAspectRatio: 0.64,
+                              ),
+                              itemBuilder: (context, index) {
+                                final outfit = _results[index];
+                                return _buildOutfitCard(outfit);
+                              },
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
