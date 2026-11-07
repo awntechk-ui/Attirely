@@ -17,6 +17,7 @@ class _UserCartPageState extends State<UserCartPage> {
   final UserCartLogic cart = UserCartLogic.instance;
 
   static const Color green = Color(0xFF087443);
+  static const Color burgundy = Color(0xFF52051F);
   static const Color darkGreen = Color(0xFF075C36);
   static const Color lightGreen = Color(0xFFEAF6EF);
   static const Color background = Color(0xFFF5F7F5);
@@ -252,26 +253,27 @@ class _UserCartPageState extends State<UserCartPage> {
       animation: cart,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: background,
+          backgroundColor: Colors.transparent,
           appBar: AppBar(
-            backgroundColor: Colors.white,
-            foregroundColor: darkGreen,
+            backgroundColor: Colors.transparent,
             elevation: 0,
             title: const Text(
               'My Cart',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: burgundy,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.4,
+              ),
             ),
             actions: [
               if (cart.items.isNotEmpty)
-                TextButton(
-                  onPressed: cart.isUpdating ? null : _clearCart,
-                  child: const Text(
-                    'Clear',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.red,
+                    size: 20,
+                  ), onPressed: cart.isUpdating ? null : _clearCart,
                 ),
             ],
           ),
@@ -329,13 +331,13 @@ class _UserCartPageState extends State<UserCartPage> {
 
               const SizedBox(height: 5),
 
-              _couponSection(),
-
-              const SizedBox(height: 16),
-
-              _priceDetails(),
-
-              const SizedBox(height: 22),
+              // _couponSection(),
+              //
+              // const SizedBox(height: 16),
+              //
+              // _priceDetails(),
+              //
+              // const SizedBox(height: 22),
 
               _similarOutfits(),
             ],
@@ -699,200 +701,200 @@ class _UserCartPageState extends State<UserCartPage> {
   // COUPONS
   // ---------------------------------------------------------
 
-  Widget _couponSection() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.local_offer_outlined,
-                color: green,
-              ),
-              const SizedBox(width: 9),
-              const Expanded(
-                child: Text(
-                  'Offers & Coupons',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: _openCoupons,
-                child: const Text(
-                  'View More',
-                  style: TextStyle(
-                    color: green,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const Divider(height: 12),
-
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: lightGreen,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const Icon(
-                  Icons.card_giftcard,
-                  color: green,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'WELCOME ATTIRELY',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Exciting offers coming soon!',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: Colors.grey,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _couponSection() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(14),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(12),
+  //       border: Border.all(color: Colors.grey.shade200),
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         Row(
+  //           children: [
+  //             const Icon(
+  //               Icons.local_offer_outlined,
+  //               color: green,
+  //             ),
+  //             const SizedBox(width: 9),
+  //             const Expanded(
+  //               child: Text(
+  //                 'Offers & Coupons',
+  //                 style: TextStyle(
+  //                   fontWeight: FontWeight.bold,
+  //                   fontSize: 15,
+  //                 ),
+  //               ),
+  //             ),
+  //             TextButton(
+  //               onPressed: _openCoupons,
+  //               child: const Text(
+  //                 'View More',
+  //                 style: TextStyle(
+  //                   color: green,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //
+  //         const Divider(height: 12),
+  //
+  //         Row(
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(10),
+  //               decoration: BoxDecoration(
+  //                 color: lightGreen,
+  //                 borderRadius: BorderRadius.circular(9),
+  //               ),
+  //               child: const Icon(
+  //                 Icons.card_giftcard,
+  //                 color: green,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             const Expanded(
+  //               child: Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Text(
+  //                     'WELCOME ATTIRELY',
+  //                     style: TextStyle(
+  //                       fontWeight: FontWeight.bold,
+  //                       fontSize: 12,
+  //                     ),
+  //                   ),
+  //                   SizedBox(height: 4),
+  //                   Text(
+  //                     'Exciting offers coming soon!',
+  //                     style: TextStyle(
+  //                       fontSize: 11,
+  //                       color: Colors.grey,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             const Icon(
+  //               Icons.arrow_forward_ios,
+  //               size: 14,
+  //               color: Colors.grey,
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // ---------------------------------------------------------
   // PRICE DETAILS
   // ---------------------------------------------------------
 
-  Widget _priceDetails() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Price Details',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+  // Widget _priceDetails() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(12),
+  //       border: Border.all(color: Colors.grey.shade200),
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Text(
+  //           'Price Details',
+  //           style: TextStyle(
+  //             fontSize: 17,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //
+  //         const SizedBox(height: 15),
+  //
+  //         _priceRow(
+  //           'Available outfits',
+  //           '$_availableCount',
+  //         ),
+  //
+  //         const SizedBox(height: 11),
+  //
+  //         _priceRow(
+  //           'Rental subtotal',
+  //           _money(_rentalTotal),
+  //         ),
+  //
+  //         const SizedBox(height: 11),
+  //
+  //         _priceRow(
+  //           'Security deposit',
+  //           _money(_depositTotal),
+  //         ),
+  //
+  //         const SizedBox(height: 4),
+  //
+  //         const Text(
+  //           'Your security deposit is refundable.',
+  //           style: TextStyle(
+  //             fontSize: 11,
+  //             color: green,
+  //           ),
+  //         ),
+  //
+  //         const Divider(height: 25),
+  //
+  //         _priceRow(
+  //           'Total rental amount',
+  //           _money(_grandTotal),
+  //           bold: true,
+  //         ),
+  //
+  //         const SizedBox(height: 9),
+  //
+  //         const Text(
+  //           'MRP is shown for reference only. Rental price and refundable '
+  //               'deposit are used in this total.',
+  //           style: TextStyle(
+  //             fontSize: 10,
+  //             color: Colors.grey,
+  //             height: 1.4,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-          const SizedBox(height: 15),
-
-          _priceRow(
-            'Available outfits',
-            '$_availableCount',
-          ),
-
-          const SizedBox(height: 11),
-
-          _priceRow(
-            'Rental subtotal',
-            _money(_rentalTotal),
-          ),
-
-          const SizedBox(height: 11),
-
-          _priceRow(
-            'Security deposit',
-            _money(_depositTotal),
-          ),
-
-          const SizedBox(height: 4),
-
-          const Text(
-            'Your security deposit is refundable.',
-            style: TextStyle(
-              fontSize: 11,
-              color: green,
-            ),
-          ),
-
-          const Divider(height: 25),
-
-          _priceRow(
-            'Total rental amount',
-            _money(_grandTotal),
-            bold: true,
-          ),
-
-          const SizedBox(height: 9),
-
-          const Text(
-            'MRP is shown for reference only. Rental price and refundable '
-                'deposit are used in this total.',
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _priceRow(
-      String label,
-      String value, {
-        bool bold = false,
-      }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: bold ? 14 : 13,
-              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: bold ? 18 : 14,
-            fontWeight: FontWeight.bold,
-            color: bold ? green : Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _priceRow(
+  //     String label,
+  //     String value, {
+  //       bool bold = false,
+  //     }) {
+  //   return Row(
+  //     children: [
+  //       Expanded(
+  //         child: Text(
+  //           label,
+  //           style: TextStyle(
+  //             fontSize: bold ? 14 : 13,
+  //             fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+  //           ),
+  //         ),
+  //       ),
+  //       Text(
+  //         value,
+  //         style: TextStyle(
+  //           fontSize: bold ? 18 : 14,
+  //           fontWeight: FontWeight.bold,
+  //           color: bold ? green : Colors.black87,
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   // ---------------------------------------------------------
   // SIMILAR OUTFITS
@@ -1046,11 +1048,7 @@ class _UserCartPageState extends State<UserCartPage> {
   // IMAGE
   // ---------------------------------------------------------
 
-  Widget _productImage(
-      String url, {
-        required double width,
-        required double height,
-      }) {
+  Widget _productImage(String url, {required double width, required double height}) {
     if (url.isEmpty) {
       return Container(
         width: width,

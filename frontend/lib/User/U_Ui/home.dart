@@ -46,14 +46,6 @@ class _HomePageState extends State<HomePage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/background/app_bg.png',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  Container(color: const Color(0xFFFFF8F7)),
-            ),
-          ),
           SafeArea(
             child: AnimatedBuilder(
               animation: logic,

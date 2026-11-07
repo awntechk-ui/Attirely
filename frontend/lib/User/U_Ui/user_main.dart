@@ -1,10 +1,9 @@
+import 'package:attirely/User/U_Ui/user_cart.dart';
 import 'package:attirely/User/U_Ui/user_rentals.dart';
-import 'package:attirely/User/U_Ui/user_wishlist.dart';
 import 'package:flutter/material.dart';
 
 import '../../Common_Screens/UI/outfits.dart';
 import 'home.dart';
-import 'profile.dart';
 
 class UserMain extends StatefulWidget {
   const UserMain({super.key});
@@ -27,18 +26,31 @@ class _UserMainState extends State<UserMain> {
       },
     ),
     const Outfits(),
-    const UserWishlist(),
-    const UserRentals(),
-    const ProfilePage(),
+    // const UserWishlist(),
+    UserRentals(
+      onBackToHome: () {
+        setState(() {
+          _currentIndex = 0;
+        });
+      },
+    ),
+    const UserCartPage()
+    // const ProfilePage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8F5),
+      backgroundColor: Colors.white,
       extendBody: true,
       body: Stack(
         children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/background/app_bg.png',
+              fit: BoxFit.cover,
+            ),
+          ),
           Positioned.fill(
             child: IndexedStack(
               index: _currentIndex,
@@ -57,7 +69,7 @@ class _UserMainState extends State<UserMain> {
                 child: Container(
                   height: 70,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.92),
+                    color: Colors.white.withOpacity(1.0),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: const [
                       BoxShadow(
@@ -78,24 +90,29 @@ class _UserMainState extends State<UserMain> {
                       ),
                       _buildNavItem(
                         icon: Icons.checkroom_outlined,
-                        label: 'Outfits',
+                        label: ' My Outfits',
                         index: 1,
                       ),
-                      _buildNavItem(
-                        icon: Icons.favorite_border,
-                        label: 'Wishlist',
-                        index: 2,
-                      ),
+                      // _buildNavItem(
+                      //   icon: Icons.favorite_border,
+                      //   label: 'Wishlist',
+                      //   index: 2,
+                      // ),
                       _buildNavItem(
                         icon: Icons.shopping_bag_outlined,
                         label: 'Rentals',
-                        index: 3,
+                        index: 2,
                       ),
                       _buildNavItem(
-                        icon: Icons.person_outline,
-                        label: 'Profile',
-                        index: 4,
+                        icon: Icons.shopping_cart_outlined,
+                        label: 'Cart',
+                        index: 3,
                       ),
+                      // _buildNavItem(
+                      //   icon: Icons.person_outline,
+                      //   label: 'Profile',
+                      //   index: 4,
+                      // ),
                     ],
                   ),
                 ),

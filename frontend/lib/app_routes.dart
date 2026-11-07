@@ -46,8 +46,6 @@ class AppRoutes {
     addOutfit: (context) => const AddOutfit(),
     profile: (context) => const ProfilePage(),
     vendorProfile: (context) => const VendorProfile(),
-
-    userRentals: (context) => const UserRentals(),
     userCart: (context) => const UserCartPage(),
 
   };
