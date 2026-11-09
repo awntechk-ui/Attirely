@@ -20,7 +20,7 @@ router = APIRouter(
 
 class AddToCartRequest(BaseModel):
     outfit_id: UUID
-
+    selected_size: str | None = None
 
 # ============================================================
 # VERIFY NORMAL USER ACCOUNT
@@ -63,7 +63,6 @@ def _get_user_id(current_user):
 # ============================================================
 
 def _format_cart_item(cart_row, outfit, images):
-
     cover = next(
         (image for image in images if image.get("is_cover")),
         images[0] if images else None,
@@ -80,6 +79,7 @@ def _format_cart_item(cart_row, outfit, images):
     return {
         "cart_item_id": cart_row.get("id"),
         "added_at": cart_row.get("created_at"),
+        "selected_size": cart_row.get("selected_size"),
         "outfit": outfit,
         "can_rent": is_available and is_published,
     }
@@ -262,6 +262,7 @@ def add_to_cart(
             .insert({
                 "user_id": user_id,
                 "outfit_id": outfit_id,
+                "selected_size": data.selected_size,
             })
             .execute()
         )

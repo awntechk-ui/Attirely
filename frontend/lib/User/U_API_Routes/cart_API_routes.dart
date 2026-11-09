@@ -88,6 +88,7 @@ class CartApiRoutes {
 
   static Future<Map<String, dynamic>> addToCart({
     required String outfitId,
+    required String? selectedSize,
   }) async {
     final token = await _getAccessToken();
 
@@ -100,6 +101,7 @@ class CartApiRoutes {
       },
       body: jsonEncode({
         'outfit_id': outfitId,
+        'selected_size': selectedSize,
       }),
     );
 

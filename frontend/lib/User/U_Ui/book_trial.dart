@@ -18,12 +18,25 @@ class BookTrialPage extends StatefulWidget {
 }
 
 class _BookTrialPageState extends State<BookTrialPage> {
-  static const Color burgundy = Color(0xFF8E2945);
-  static const Color lightBurgundy = Color(0xFFF8EDF1);
+  // Green theme
+  static const Color burgundy = Color(0xFF087443);
+  static const Color lightBurgundy = Color(0xFFEAF6EF);
+  static const Color pageBackground = Color(0xFFF5F8F5);
+  static const Color darkGreen = Color(0xFF075C36);
+  static const Color borderGreen = Color(0xFFDCEBE1);
+
+  // Trial pricing (per outfit)
+  static const double trialChargePerOutfit = 150;
+  static const double platformFeePerOutfit = 50;
+
+  int get outfitCount => logic.outfitCount;
+  double get totalTrialCharge => outfitCount * trialChargePerOutfit;
+  double get totalPlatformFee => outfitCount * platformFeePerOutfit;
+  double get totalPayable => totalTrialCharge + totalPlatformFee;
+  double get refundableAmount => totalPayable - totalPlatformFee;
 
   late final BookTrialLogic logic;
 
-  @override
   @override
   void initState() {
     super.initState();
@@ -777,8 +790,8 @@ class _BookTrialPageState extends State<BookTrialPage> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Trial charge: ${_money(
-                          BookTrialLogic.trialChargePerOutfit,
+                        'Total trial amount: ${_money(
+                          trialChargePerOutfit + platformFeePerOutfit,
                         )}',
                         style: const TextStyle(
                           color: burgundy,
@@ -821,44 +834,53 @@ class _BookTrialPageState extends State<BookTrialPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: borderGreen),
           ),
           child: Column(
             children: [
               _priceRow(
-                'Trial charge (${logic.outfitCount} × ₹200)',
-                _money(logic.trialCharge),
+                'Trial charge ($outfitCount × ₹150)',
+                _money(totalTrialCharge),
               ),
               _priceRow(
-                'Platform and payment fee',
-                '-${_money(logic.platformPaymentFee)}',
-                valueColor: burgundy,
+                'Platform fee ($outfitCount × ₹50)',
+                _money(totalPlatformFee),
               ),
               const Divider(height: 22),
               _priceRow(
-                'Refundable amount (${logic.outfitCount} × ₹150)',
-                _money(logic.refundableAmount),
+                'Total payable ($outfitCount × ₹200)',
+                _money(totalPayable),
                 bold: true,
-                valueColor: burgundy,
+                valueColor: darkGreen,
               ),
-              const SizedBox(height: 4),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'The refundable amount is returned after the '
-                      'platform and payment fee deduction.',
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 10,
-                    height: 1.4,
-                  ),
+              const SizedBox(height: 5),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: lightBurgundy,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-              const Divider(height: 22),
-              _priceRow(
-                'Total payable now',
-                _money(logic.totalPayable),
-                bold: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _priceRow(
+                      'Refundable amount',
+                      _money(refundableAmount),
+                      bold: true,
+                      valueColor: darkGreen,
+                    ),
+                    const Text(
+                      'Refundable amount = total payable − total platform fee. '
+                          '₹150 is refundable for each outfit.',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 10,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -877,9 +899,9 @@ class _BookTrialPageState extends State<BookTrialPage> {
       animation: logic,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: pageBackground,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: pageBackground,
             foregroundColor: burgundy,
             elevation: 0,
             title: const Text(
@@ -887,7 +909,15 @@ class _BookTrialPageState extends State<BookTrialPage> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-          body: _buildContent(),
+          body: Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/app_bg.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: _buildContent(),
+          ),
           bottomNavigationBar: logic.selectedOutfits.isEmpty
               ? null
               : SafeArea(
@@ -930,7 +960,7 @@ class _BookTrialPageState extends State<BookTrialPage> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        _money(logic.totalPayable),
+                        _money(totalPayable),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,

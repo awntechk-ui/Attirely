@@ -26,7 +26,6 @@ class _UserMainState extends State<UserMain> {
       },
     ),
     const Outfits(),
-    // const UserWishlist(),
     UserRentals(
       onBackToHome: () {
         setState(() {
@@ -35,7 +34,6 @@ class _UserMainState extends State<UserMain> {
       },
     ),
     const UserCartPage()
-    // const ProfilePage(),
   ];
 
   @override
@@ -71,11 +69,25 @@ class _UserMainState extends State<UserMain> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(1.0),
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: const [
+
+                    // Elegant gold border
+                    border: Border.all(
+                      color: const Color(0xFFE9D8B0),
+                      width: 1.7,
+                    ),
+
+                    // Soft floating shadow
+                    boxShadow: [
                       BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 15,
-                        offset: Offset(0, 4),
+                        color: const Color(0xFF8E2945).withOpacity(0.10),
+                        blurRadius: 18,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 5),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -93,11 +105,6 @@ class _UserMainState extends State<UserMain> {
                         label: ' My Outfits',
                         index: 1,
                       ),
-                      // _buildNavItem(
-                      //   icon: Icons.favorite_border,
-                      //   label: 'Wishlist',
-                      //   index: 2,
-                      // ),
                       _buildNavItem(
                         icon: Icons.shopping_bag_outlined,
                         label: 'Rentals',
@@ -113,6 +120,7 @@ class _UserMainState extends State<UserMain> {
                       //   label: 'Profile',
                       //   index: 4,
                       // ),
+
                     ],
                   ),
                 ),

@@ -9,7 +9,6 @@ class RegisterPage extends StatefulWidget {
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
-
 class _RegisterPageState extends State<RegisterPage> {
   late RegisterLogic logic;
 
@@ -114,6 +113,54 @@ class _RegisterPageState extends State<RegisterPage> {
     ],
   );
 
+  void showPasswordInfo() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        title: const Row(
+          children: [
+            Icon(
+              Icons.info_outline,
+              color: burgundy,
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Password Tips',
+              style: TextStyle(
+                color: burgundy,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Your password must contain at least 6 characters.\n\n'
+              'Make it strong by combining letters, numbers and special characters.',
+          style: TextStyle(
+            color: lightBurgundy,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Got it',
+              style: TextStyle(
+                color: burgundy,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   // =========================================================
   // GO TO LOGIN
   // =========================================================
@@ -265,56 +312,83 @@ class _RegisterPageState extends State<RegisterPage> {
 
                           const SizedBox(height: 14),
 
+
                           TextField(
                             controller: logic.passwordController,
                             style: inputTextStyle,
                             obscureText: !showPassword,
                             textInputAction: TextInputAction.next,
-                            decoration:
-                            fieldDecoration('Password').copyWith(
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    showPassword = !showPassword;
-                                  });
-                                },
-                                icon: Icon(
-                                  showPassword
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                  color: burgundy,
-                                ),
+                            decoration: fieldDecoration('Password').copyWith(
+                              suffixIcon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Password requirements',
+                                    onPressed: showPasswordInfo,
+                                    icon: const Icon(
+                                      Icons.info_outline,
+                                      color: burgundy,
+                                      size: 21,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        showPassword = !showPassword;
+                                      });
+                                    },
+                                    icon: Icon(
+                                      showPassword
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                      color: burgundy,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
+
 
                           const SizedBox(height: 14),
 
+
                           TextField(
-                            controller:
-                            logic.confirmPasswordController,
+                            controller: logic.confirmPasswordController,
                             style: inputTextStyle,
                             obscureText: !showConfirmPassword,
                             textInputAction: TextInputAction.next,
-                            decoration:
-                            fieldDecoration('Confirm password')
-                                .copyWith(
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    showConfirmPassword =
-                                    !showConfirmPassword;
-                                  });
-                                },
-                                icon: Icon(
-                                  showConfirmPassword
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                  color: burgundy,
-                                ),
+                            decoration: fieldDecoration('Confirm password').copyWith(
+                              suffixIcon: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Password requirements',
+                                    onPressed: showPasswordInfo,
+                                    icon: const Icon(
+                                      Icons.info_outline,
+                                      color: burgundy,
+                                      size: 21,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        showConfirmPassword = !showConfirmPassword;
+                                      });
+                                    },
+                                    icon: Icon(
+                                      showConfirmPassword
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                      color: burgundy,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
+
 
                           const SizedBox(height: 14),
 

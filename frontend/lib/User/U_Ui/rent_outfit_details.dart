@@ -52,51 +52,51 @@ class _RentOutfitDetailsPageState extends State<RentOutfitDetails> {
 
 
 
+
   Future<void> _addToCart() async {
     final outfit = logic.outfit;
 
-    if (outfit == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Outfit details are not available.'),
-        ),
-      );
-      return;
-    }
+    if (outfit == null) return;
 
-    // Prevent duplicate requests
     final cartLogic = UserCartLogic.instance;
 
     if (cartLogic.isUpdating) return;
 
-    // Validate selected size
     final selectedSize = logic.selectedSize;
 
     if (selectedSize == null || selectedSize.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Please select an outfit size.'),
+          duration: Duration(seconds: 2),
         ),
       );
       return;
     }
 
-    // Prepare outfit data
     final itemForCart = Map<String, dynamic>.from(outfit);
-
     itemForCart['selected_size'] = selectedSize;
 
-    // Call backend and WAIT for result
     final success = await cartLogic.addOutfit(itemForCart);
 
     if (!mounted) return;
 
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Remove any previously displayed snackbar.
+    messenger.hideCurrentSnackBar();
+
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
-          content: const Text('Outfit added to your cart successfully!'),
+          content: const Text(
+            'Outfit added to your cart successfully!',
+          ),
           backgroundColor: deepBurgundy,
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
           action: SnackBarAction(
             label: 'VIEW CART',
             textColor: Colors.white,
@@ -105,24 +105,29 @@ class _RentOutfitDetailsPageState extends State<RentOutfitDetails> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             cartLogic.errorMessage ?? 'Unable to add outfit to cart.',
           ),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
         ),
       );
     }
   }
 
   void _openCart() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const UserCartPage()),
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const UserCartPage(),
+      ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

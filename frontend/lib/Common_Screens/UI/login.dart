@@ -35,6 +35,58 @@ class _LoginPageState extends State<LoginPage> {
     logic.dispose();
     super.dispose();
   }
+  // =========================================================
+// PASSWORD INFO POPUP
+// =========================================================
+
+  void showPasswordInfo() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        title: const Row(
+          children: [
+            Icon(
+              Icons.info_outline,
+              color: burgundy,
+            ),
+            SizedBox(width: 10),
+            Text(
+              'Password Tips',
+              style: TextStyle(
+                color: burgundy,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Your password must contain at least 6 characters.\n\n'
+              'Make it strong by combining letters, numbers and special characters.',
+          style: TextStyle(
+            color: lightBurgundy,
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Got it',
+              style: TextStyle(
+                color: burgundy,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   // =========================================================
   // INPUT DECORATION
@@ -285,6 +337,7 @@ class _LoginPageState extends State<LoginPage> {
                     // PASSWORD
                     // =================================================
 
+
                     TextField(
                       controller: logic.passwordController,
                       style: const TextStyle(
@@ -292,31 +345,46 @@ class _LoginPageState extends State<LoginPage> {
                         fontSize: 15,
                       ),
                       obscureText: !showPassword,
-                      textInputAction:
-                      TextInputAction.done,
+                      textInputAction: TextInputAction.done,
                       onSubmitted: (_) {
                         if (!logic.isLoading) {
                           performLogin();
                         }
                       },
-                      decoration:
-                      fieldDecoration('Password').copyWith(
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              showPassword =
-                              !showPassword;
-                            });
-                          },
-                          icon: Icon(
-                            showPassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: burgundy,
-                          ),
+                      decoration: fieldDecoration('Password').copyWith(
+                        suffixIcon: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // INFO BUTTON
+                            IconButton(
+                              tooltip: 'Password requirements',
+                              onPressed: showPasswordInfo,
+                              icon: const Icon(
+                                Icons.info_outline,
+                                color: burgundy,
+                                size: 21,
+                              ),
+                            ),
+
+                            // SHOW / HIDE PASSWORD
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  showPassword = !showPassword;
+                                });
+                              },
+                              icon: Icon(
+                                showPassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: burgundy,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+
 
                     const SizedBox(height: 25),
 

@@ -51,7 +51,7 @@ class _ProfilePageState extends State<ProfilePage> {
           // =====================================================
 
           Image.asset(
-            'assets/background/app_bg.png',
+            'assets/background/login_bg.png',
             fit: BoxFit.cover,
           ),
 

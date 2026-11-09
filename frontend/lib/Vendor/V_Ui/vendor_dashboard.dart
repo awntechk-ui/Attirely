@@ -45,7 +45,7 @@ class _VendorDashboardState
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/background/app_bg.png',
+              'assets/background/login_bg.png',
               fit: BoxFit.cover,
             ),
           ),

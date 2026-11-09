@@ -1,6 +1,7 @@
 
 
 
+from dns import name
 import json
 import uuid
 from pathlib import Path
@@ -26,6 +27,20 @@ router = APIRouter(
 BUCKET_NAME = "outfit-images"
 MAX_IMAGES = 5
 MAX_FILE_SIZE = 5 * 1024 * 1024
+ALLOWED_GENDERS = {
+    "women",
+    "girl_kid",
+    "boy_kid",
+    "men",
+    "unisex_adult",
+    "unisex_kid",
+}
+
+KID_GENDERS = {
+    "girl_kid",
+    "boy_kid",
+    "unisex_kid",
+}
 
 ALLOWED_TYPES = {
     "image/jpeg",
@@ -77,23 +92,72 @@ async def create_outfit(
     name: str = Form(...),
     description: str = Form(...),
     gender: str = Form(...),
+
     brand: str | None = Form(None),
     occasion: str = Form(...),
     category: str = Form(...),
+
+    outfit_type: str | None = Form(None),
+    fit: str | None = Form(None),
+    pattern: str | None = Form(None),
+    collar: str | None = Form(None),
+    age_group: str | None = Form(None),
+
     rental_price: float = Form(...),
     mrp: float | None = Form(None),
     security_deposit: float = Form(...),
+
     color_name: str | None = Form(None),
     color_hex: str | None = Form(None),
+
     size_type: str = Form("standard"),
     sizes: str = Form("[]"),
     measurements: str = Form("{}"),
-    material: str = Form(...),
-    sleeve: str = Form(...),
+
+    material: str | None = Form(None),
+    sleeve: str | None = Form(None),
+
     photos: list[UploadFile] = File(...),
     current_user=Depends(get_current_user),
 ):
     name = name.strip()
+    gender = gender.strip().lower()
+
+    if gender not in ALLOWED_GENDERS:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid gender category.",
+        )
+
+    if gender in KID_GENDERS:
+        if not age_group or not age_group.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Age group is required for kids' outfits.",
+            )
+
+        if size_type != "standard":
+            raise HTTPException(
+                status_code=400,
+                detail="Kids' outfits must use standard sizes.",
+            )
+    else:
+        age_group = None
+
+    if outfit_type:
+        outfit_type = outfit_type.strip() or None
+
+    if fit:
+        fit = fit.strip() or None
+
+    if pattern:
+        pattern = pattern.strip() or None
+
+    if collar:
+        collar = collar.strip() or None
+
+    if age_group:
+        age_group = age_group.strip()
 
     if len(name) < 2:
         raise HTTPException(
@@ -224,10 +288,15 @@ async def create_outfit(
         "size_type": size_type,
         "sizes": parsed_sizes,
         "measurements": parsed_measurements,
-        "material": material,
-        "sleeve": sleeve,
+        "material": material.strip() if material else None,
+"sleeve": sleeve.strip() if sleeve else None,
         "status": "published",
         "is_available": True,
+        "outfit_type": outfit_type,
+        "fit": fit,
+        "pattern": pattern,
+        "collar": collar,
+        "age_group": age_group,
     }
 
     try:
@@ -431,18 +500,56 @@ async def update_outfit(
     rental_price: float = Form(...),
     mrp: float | None = Form(None),
     security_deposit: float = Form(...),
-    color_name: str | None = Form(None),
+        color_name: str | None = Form(None),
     color_hex: str | None = Form(None),
+
+    outfit_type: str | None = Form(None),
+    fit: str | None = Form(None),
+    pattern: str | None = Form(None),
+    collar: str | None = Form(None),
+    age_group: str | None = Form(None),
+
     size_type: str = Form("standard"),
     sizes: str = Form("[]"),
     measurements: str = Form("{}"),
-    material: str = Form(...),
-    sleeve: str = Form(...),
+
+    material: str | None = Form(None),
+    sleeve: str | None = Form(None),
+
     keep_image_ids: str = Form("[]"),
     photos: list[UploadFile] | None = File(None),
     current_user=Depends(get_current_user),
+
 ):
     user_id = str(current_user.id)
+    gender = gender.strip().lower()
+
+    if gender not in ALLOWED_GENDERS:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid gender category.",
+        )
+
+    if gender in KID_GENDERS:
+        if not age_group or not age_group.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Age group is required for kids' outfits.",
+            )
+
+        if size_type != "standard":
+            raise HTTPException(
+                status_code=400,
+                detail="Kids' outfits must use standard sizes.",
+            )
+    else:
+        age_group = None
+
+    outfit_type = outfit_type.strip() if outfit_type else None
+    fit = fit.strip() if fit else None
+    pattern = pattern.strip() if pattern else None
+    collar = collar.strip() if collar else None
+    age_group = age_group.strip() if age_group else None
 
     # Verify ownership
     existing = (
@@ -542,6 +649,11 @@ async def update_outfit(
             "description": description.strip(),
             "gender": gender,
             "brand": brand.strip() if brand else None,
+            "outfit_type": outfit_type,
+            "fit": fit,
+            "pattern": pattern,
+            "collar": collar,
+            "age_group": age_group,
             "occasion": occasion,
             "category": category,
             "rental_price": rental_price,
@@ -552,8 +664,8 @@ async def update_outfit(
             "size_type": size_type,
             "sizes": parsed_sizes,
             "measurements": parsed_measurements,
-            "material": material,
-            "sleeve": sleeve,
+            "material": material.strip() if material else None,
+"sleeve": sleeve.strip() if sleeve else None,
         }
 
         updated = (
