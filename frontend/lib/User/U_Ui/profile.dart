@@ -178,7 +178,22 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       backgroundColor: ivory,
-      body: SafeArea(
+      body: Stack(
+        children: [
+      Positioned.fill(
+      child: Image.asset(
+        'assets/background/login_bg.png',
+        fit: BoxFit.cover,
+      ),
+    ),
+
+    Positioned.fill(
+    child: Container(
+    color: const Color(0xEFFFFFFF),
+    ),
+    ),
+
+    SafeArea(
         child: logic.isLoading && user == null
             ? const Center(
           child: CircularProgressIndicator(
@@ -255,6 +270,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ),
+      ),],
       ),
     );
   }

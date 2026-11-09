@@ -8,6 +8,7 @@ from app.routes.user_addresses import router as user_addresses_router
 from app.routes.cart import router as cart_router
 from app.routes.accessory import router as accessories_router
 from app.routes.user_profile import router as user_profile_router
+from app.routes.vendor_subscription import router as vendor_subscription_router
 
 app = FastAPI(
     title="User Backend",
@@ -29,6 +30,7 @@ app.include_router(user_addresses_router)
 app.include_router(cart_router)
 app.include_router(accessories_router)
 app.include_router(user_profile_router)
+app.include_router(vendor_subscription_router)
 
 @app.get("/")
 def root():

@@ -2,7 +2,6 @@ import 'package:attirely/Common_Screens/UI/add_outfit.dart';
 import 'package:attirely/Vendor/V_Ui/vendor_bookings.dart';
 import 'package:attirely/Vendor/V_Ui/vendor_dashboard.dart';
 import 'package:attirely/Common_Screens/UI/outfits.dart';
-import 'package:attirely/Vendor/V_Ui/vendor_profile.dart';
 import 'package:attirely/Vendor/V_Ui/vendor_requests.dart';
 import 'package:flutter/material.dart';
 
@@ -29,7 +28,7 @@ class _VendorMainState extends State<VendorMain> {
       const Outfits(),
       const VendorRequests(),
       const VendorBookings(),
-      const VendorProfile(),
+
     ];
   }
 
@@ -171,12 +170,7 @@ class _VendorMainState extends State<VendorMain> {
               label: 'Bookings',
             ),
 
-            _navItem(
-              index: 4,
-              icon: Icons.person_outline_rounded,
-              selectedIcon: Icons.person_rounded,
-              label: 'Profile',
-            ),
+
           ],
         ),
       ),

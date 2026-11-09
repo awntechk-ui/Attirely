@@ -15,6 +15,7 @@ import 'Vendor/V_Ui/vendor_main.dart';
 import 'Vendor/V_Ui/vendor_profile.dart';
 import 'Vendor/V_Ui/vendor_register.dart';
 import 'User/U_Ui/profile.dart';
+import 'Vendor/V_Ui/vendor_upgrade.dart';
 
 
 
@@ -34,7 +35,7 @@ class AppRoutes {
   static const String userRentals = '/user-rentals';
   static const String userCart = '/user-cart';
   static const String outfitDetails = '/outfit-details';
-
+  static const String vendorUpgrade = '/vendor-upgrade';
 
   static final Map<String, WidgetBuilder> routes = {
     login: (context) => const LoginPage(),
@@ -70,5 +71,7 @@ class AppRoutes {
         listingType: args['listingType'].toString(),
       );
     },
+    vendorUpgrade: (context) => const VendorUpgrade(),
   };
+
 }

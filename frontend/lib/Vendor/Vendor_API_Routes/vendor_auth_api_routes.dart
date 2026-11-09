@@ -13,9 +13,7 @@ class VendorAuthApiRoutes {
     required String accessToken,
   }) async {
     final response = await http.get(
-      Uri.parse(
-        '${AppConfig.baseUrl}/vendor/me',
-      ),
+      Uri.parse('${AppConfig.baseUrl}/vendor/me'),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
@@ -23,16 +21,29 @@ class VendorAuthApiRoutes {
     );
 
     final data = jsonDecode(response.body);
-    // print("Vendor Data : $data");
 
     if (response.statusCode >= 200 &&
         response.statusCode < 300) {
-      return data;
+      return {
+        'exists': true,
+        'vendor': data,
+      };
+    }
+
+    // Backend uses 403 specifically when the vendor profile is missing.
+    if (response.statusCode == 403 &&
+        data is Map &&
+        data['detail'] == 'Vendor profile not found') {
+      return {
+        'exists': false,
+        'vendor': null,
+      };
     }
 
     throw Exception(
-      data['detail'] ??
-          'Failed to check vendor profile',
+      data is Map
+          ? data['detail'] ?? 'Failed to check vendor profile'
+          : 'Failed to check vendor profile',
     );
   }
 
