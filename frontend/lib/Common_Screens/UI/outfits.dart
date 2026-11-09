@@ -53,9 +53,11 @@ class _OutfitsState extends State<Outfits> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: systemStyle,
-      child: Container(
+    return Scaffold(
+        backgroundColor: background,
+        body: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: systemStyle,
+          child: Container(
         color: burgundy,
         child: SafeArea(
           top: true,
@@ -119,6 +121,7 @@ class _OutfitsState extends State<Outfits> {
             ),
           ),
         ),
+          ),
       ),
     );
   }
