@@ -1,3 +1,4 @@
+import 'package:attirely/User/U_Ui/payment_security.dart';
 import 'package:flutter/material.dart';
 
 import '../U_Ui_Logic/trial_address_logic.dart';
@@ -196,9 +197,7 @@ class _RentOutPageState extends State<RentOutPage> {
       );
   }
 
-  Future<void> _addAddress({
-    Map<String, dynamic>? address,
-  }) async {
+  Future<void> _addAddress({Map<String, dynamic>? address,}) async {
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
@@ -398,23 +397,23 @@ class _RentOutPageState extends State<RentOutPage> {
     }
 
     // Connect the actual rental booking/payment API here.
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Payment Coming Soon'),
-        content: const Text(
-          'Rental booking and payment integration '
-              'will be available soon.',
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentSecurityPage(
+          outfits: selectedOutfits
+              .map((outfit) => Map<String, dynamic>.from(outfit))
+              .toList(),
+          rentalDuration: selectedDuration,
+          deliveryDate: deliveryDate,
+          returnDate: returnDate,
+          deliveryAddress: Map<String, dynamic>.from(selectedAddress!),
+          rentalFee: rentalTotal,
+          securityDeposit: securityDeposit,
+          coutureCareFee: careTotal,
+          coutureCareEnabled: coutureCare,
+          backupSizeIncluded: backupSize,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Okay',
-              style: TextStyle(color: green),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -423,10 +422,7 @@ class _RentOutPageState extends State<RentOutPage> {
   // COMMON UI
   // ---------------------------------------------------------
 
-  Widget _card({
-    required Widget child,
-    EdgeInsets padding = const EdgeInsets.all(15),
-  }) {
+  Widget _card({required Widget child, EdgeInsets padding = const EdgeInsets.all(15)}) {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
@@ -445,11 +441,7 @@ class _RentOutPageState extends State<RentOutPage> {
     );
   }
 
-  Widget _sectionHeading(
-      String title, {
-        IconData? icon,
-        Widget? trailing,
-      }) {
+  Widget _sectionHeading(String title, {IconData? icon, Widget? trailing,}) {
     return Row(
       children: [
         if (icon != null) ...[
@@ -533,26 +525,13 @@ class _RentOutPageState extends State<RentOutPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        const Text(
-                          'Rent Outfits',
-                          style: TextStyle(
-                            fontFamily: 'serif',
-                            fontSize: 22,
-                            color: Color(0xFF202522),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFD9BC87),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'Rent Outfits',
+                      style: TextStyle(
+                        fontFamily: 'serif',
+                        fontSize: 22,
+                        color: Color(0xFF202522),
+                      ),
                     ),
                     const SizedBox(height: 3),
                     const Text(

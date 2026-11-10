@@ -1,6 +1,5 @@
 
 import 'package:flutter/material.dart';
-
 import '../U_Ui_Logic/book_trial_logic.dart';
 import '../U_Ui_Logic/trial_address_logic.dart';
 import 'add_trial_address.dart';
@@ -25,15 +24,8 @@ class _BookTrialPageState extends State<BookTrialPage> {
   static const Color darkGreen = Color(0xFF075C36);
   static const Color borderGreen = Color(0xFFDCEBE1);
 
-  // Trial pricing (per outfit)
-  static const double trialChargePerOutfit = 150;
-  static const double platformFeePerOutfit = 50;
+  bool _isSubmitting = false;
 
-  int get outfitCount => logic.outfitCount;
-  double get totalTrialCharge => outfitCount * trialChargePerOutfit;
-  double get totalPlatformFee => outfitCount * platformFeePerOutfit;
-  double get totalPayable => totalTrialCharge + totalPlatformFee;
-  double get refundableAmount => totalPayable - totalPlatformFee;
 
   late final BookTrialLogic logic;
 
@@ -43,58 +35,13 @@ class _BookTrialPageState extends State<BookTrialPage> {
 
     logic = BookTrialLogic(outfits: widget.outfits);
 
-    _loadSavedAddresses();
-  }
-
-  Future<void> _loadSavedAddresses() async {
-    final addressLogic = TrialAddressLogic.instance;
-
-    await addressLogic.loadAddresses(refresh: true);
-
-    if (!mounted) return;
-
-    final address = addressLogic.selectedAddress;
-
-    if (address != null) {
-      logic.setAddress(address);
-    }
+    logic.loadSavedAddresses();
   }
 
   @override
   void dispose() {
     logic.dispose();
     super.dispose();
-  }
-
-  String _money(dynamic value) {
-    final number = value is num
-        ? value.toDouble()
-        : double.tryParse(value?.toString() ?? '') ?? 0;
-
-    return '₹${number.toStringAsFixed(0)}';
-  }
-
-  String _image(Map<String, dynamic> outfit) {
-    final cover = outfit['cover_image_url']?.toString() ?? '';
-
-    if (cover.isNotEmpty) return cover;
-
-    final images = outfit['images'];
-
-    if (images is List) {
-      for (final image in images) {
-        if (image is Map && image['is_cover'] == true) {
-          final url = image['image_url']?.toString() ?? '';
-          if (url.isNotEmpty) return url;
-        }
-      }
-
-      if (images.isNotEmpty && images.first is Map) {
-        return images.first['image_url']?.toString() ?? '';
-      }
-    }
-
-    return '';
   }
 
   void _message(String message) {
@@ -211,7 +158,7 @@ class _BookTrialPageState extends State<BookTrialPage> {
                               crossAxisAlignment:
                               CrossAxisAlignment.start,
                               children: [
-                                Text(_addressText(address)),
+                                Text(logic.addressText(address)),
                                 if (isDefault)
                                   const Text(
                                     'Default address',
@@ -355,58 +302,108 @@ class _BookTrialPageState extends State<BookTrialPage> {
   }
 
 
-  String _addressText(Map<String, dynamic> address) {
-    final parts = [
-      address['house'],
-      address['street'],
-      address['landmark'],
-      address['city'],
-      address['state'],
-      address['pincode'],
-    ];
+  Future<void> _continuePayment() async {
+    if (logic.isSubmitting) return;
 
-    return parts
-        .where((part) =>
-    part != null && part.toString().trim().isNotEmpty)
-        .join(', ');
-  }
+    try {
+      final response = await logic.submitBooking();
 
-  void _continuePayment() {
-    if (logic.selectedOutfits.isEmpty) {
-      _message('Please select at least one outfit.');
-      return;
-    }
+      if (!mounted) return;
 
-    if (logic.selectedAddress == null) {
-      _message('Please add or select a trial address.');
-      return;
-    }
+      final bookingReference =
+          response['booking_reference']?.toString() ?? '';
 
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text('Payment Coming Soon'),
-          content: const Text(
-            'Payment integration is under development. '
-                'Razorpay will be available soon.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text(
-                'Okay',
-                style: TextStyle(color: burgundy),
-              ),
+      final totalOutfits =
+          response['total_outfits'] ?? logic.outfitCount;
+
+      final amount =
+          response['total_amount'] ?? logic.totalPayable;
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
             ),
-          ],
-        );
-      },
-    );
+            icon: const Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 55,
+            ),
+            title: const Text(
+              'Trial Booked Successfully!',
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Your trial requests have been sent to the respective vendors.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 18),
+                Text('Outfits: $totalOutfits'),
+                Text(
+                  'Payment: ${response['payment_status'] ?? 'successful'}',
+                ),
+                Text('Amount: ₹$amount'),
+                const SizedBox(height: 12),
+                const Text(
+                  'Booking Reference',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                SelectableText(
+                  bookingReference,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: darkGreen,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    Navigator.pop(context, true);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: burgundy,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Done'),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      _message(
+        e.toString().replaceFirst('Exception: ', ''),
+      );
+    }
   }
+
+
+  String _displayDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+
+    return '$day/$month/${date.year}';
+  }
+
 
   Widget _outfitImage(String url) {
     if (url.isEmpty) {
@@ -447,6 +444,122 @@ class _BookTrialPageState extends State<BookTrialPage> {
       ),
     );
   }
+
+
+  Widget _trialScheduleSection(Map<String, dynamic> outfit) {
+    final outfitId = outfit['id']?.toString() ?? '';
+    final selectedDate = logic.trialDateFor(outfitId);
+    final selectedTime = logic.timeSlotFor(outfitId);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: lightBurgundy,
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Preferred Trial Schedule',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: darkGreen,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final now = DateTime.now();
+
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate ?? now,
+                      firstDate: DateTime(now.year, now.month, now.day),
+                      lastDate: now.add(const Duration(days: 365)),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: const ColorScheme.light(
+                              primary: burgundy,
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+
+                    if (picked != null) {
+                      logic.setTrialDate(outfitId, picked);
+                    }
+                  },
+                  icon: const Icon(Icons.calendar_month, size: 17),
+                  label: Text(
+                    selectedDate == null
+                        ? 'Select Date'
+                        : _displayDate(selectedDate),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: darkGreen,
+                    side: const BorderSide(color: borderGreen),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: selectedTime,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.access_time,
+                      size: 17,
+                    ),
+                    hintText: 'Select Time',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 10,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(9),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  items: BookTrialLogic.trialTimeSlots.map((slot) {
+                    return DropdownMenuItem<String>(
+                      value: slot,
+                      child: Text(
+                        slot,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      logic.setTrialTimeSlot(outfitId, value);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _priceRow(
       String label,
@@ -566,7 +679,7 @@ class _BookTrialPageState extends State<BookTrialPage> {
             ),
             const SizedBox(height: 5),
             Text(
-              _addressText(address),
+              logic.addressText(address),
               style: const TextStyle(
                 color: Colors.black54,
                 fontSize: 12,
@@ -754,7 +867,7 @@ class _BookTrialPageState extends State<BookTrialPage> {
         ...logic.selectedOutfits.map((outfit) {
           final id = outfit['id']?.toString() ?? '';
           final name = outfit['name']?.toString() ?? 'Outfit';
-          final image = _image(outfit);
+          final image = logic.imageUrl(outfit);
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -790,8 +903,8 @@ class _BookTrialPageState extends State<BookTrialPage> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Total trial amount: ${_money(
-                          trialChargePerOutfit + platformFeePerOutfit,
+                        'Total trial amount: ${logic.money(
+                          BookTrialLogic.trialChargePerOutfit + BookTrialLogic.platformFeePerOutfit,
                         )}',
                         style: const TextStyle(
                           color: burgundy,
@@ -800,6 +913,7 @@ class _BookTrialPageState extends State<BookTrialPage> {
                         ),
                       ),
                       const SizedBox(height: 9),
+                      _trialScheduleSection(outfit),
                       TextButton.icon(
                         onPressed: () => logic.removeOutfit(id),
                         style: TextButton.styleFrom(
@@ -839,17 +953,17 @@ class _BookTrialPageState extends State<BookTrialPage> {
           child: Column(
             children: [
               _priceRow(
-                'Trial charge ($outfitCount × ₹150)',
-                _money(totalTrialCharge),
+                'Trial charge (${logic.outfitCount} × ₹150)',
+                logic.money(logic.totalTrialCharge),
               ),
               _priceRow(
-                'Platform fee ($outfitCount × ₹50)',
-                _money(totalPlatformFee),
+                'Platform fee (${logic.outfitCount} × ₹50)',
+                logic.money(logic.totalPlatformFee),
               ),
               const Divider(height: 22),
               _priceRow(
-                'Total payable ($outfitCount × ₹200)',
-                _money(totalPayable),
+                'Total payable (${logic.outfitCount} × ₹200)',
+                logic.money(logic.totalPayable),
                 bold: true,
                 valueColor: darkGreen,
               ),
@@ -866,7 +980,7 @@ class _BookTrialPageState extends State<BookTrialPage> {
                   children: [
                     _priceRow(
                       'Refundable amount',
-                      _money(refundableAmount),
+                      logic.money(logic.refundableAmount),
                       bold: true,
                       valueColor: darkGreen,
                     ),
@@ -939,7 +1053,6 @@ class _BookTrialPageState extends State<BookTrialPage> {
               child: SizedBox(
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _continuePayment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: burgundy,
                     foregroundColor: Colors.white,
@@ -948,11 +1061,21 @@ class _BookTrialPageState extends State<BookTrialPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Row(
+                  onPressed: _isSubmitting ? null : _continuePayment,
+                  child: _isSubmitting
+                      ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                      : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'Continue to Payment',
+                        'Confirm Trial Booking',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -960,7 +1083,7 @@ class _BookTrialPageState extends State<BookTrialPage> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        _money(totalPayable),
+                        logic.money(logic.totalPayable),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,

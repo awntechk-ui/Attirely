@@ -82,11 +82,29 @@ class _UserCartPageState extends State<UserCartPage> {
 
   int get _availableCount => cart.items.where(_available).length;
 
-  List<Map<String, dynamic>> get _availableOutfits => cart.items
-      .where(_available)
-      .map(_outfit)
-      .where((outfit) => outfit['id'] != null)
-      .toList();
+
+  List<Map<String, dynamic>> get _availableOutfits {
+    return cart.items
+        .where(_available)
+        .map((item) {
+      final outfit = _outfit(item);
+
+      // Preserve the selected size from the cart item.
+      outfit['selected_size'] = _firstText([
+        item['selected_size'],
+        item['size'],
+        outfit['selected_size'],
+        outfit['size'],
+      ]);
+
+      return outfit;
+    })
+        .where((outfit) =>
+    outfit['id'] != null &&
+        (outfit['selected_size'] as String).isNotEmpty)
+        .toList();
+  }
+
 
   void _message(String message) {
     if (!mounted) return;
