@@ -10,12 +10,14 @@ import 'User/U_Ui/user_cart.dart';
 import 'User/U_Ui/home.dart';
 import 'User/U_Ui/user_main.dart';
 import 'User/U_Ui/user_rentals.dart';
+import 'Vendor/V_Ui/vendor_bookings.dart';
 import 'Vendor/V_Ui/vendor_dashboard.dart';
 import 'Vendor/V_Ui/vendor_main.dart';
 import 'Vendor/V_Ui/vendor_profile.dart';
 import 'Vendor/V_Ui/vendor_register.dart';
 import 'User/U_Ui/profile.dart';
-import 'Vendor/V_Ui/vendor_upgrade.dart';
+import 'Vendor/V_Ui/vendor_requests.dart';
+import 'Vendor/V_Ui/vendor_subscription_plan.dart';
 
 
 
@@ -36,6 +38,8 @@ class AppRoutes {
   static const String userCart = '/user-cart';
   static const String outfitDetails = '/outfit-details';
   static const String vendorUpgrade = '/vendor-upgrade';
+  static const String vendorRequests = '/vendor-requests';
+  static const String vendorBookings = '/vendor-bookings';
 
   static final Map<String, WidgetBuilder> routes = {
     login: (context) => const LoginPage(),
@@ -72,6 +76,9 @@ class AppRoutes {
       );
     },
     vendorUpgrade: (context) => const VendorUpgrade(),
-  };
+    vendorRequests: (context) => const VendorRequests(),
+    vendorBookings: (context) => const VendorBookings(),
 
+
+  };
 }

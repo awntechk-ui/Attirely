@@ -17,6 +17,7 @@ class EditListingLogic extends ChangeNotifier {
 
   final String listingId;
   final String listingType;
+  bool isDeleting = false;
 
   bool get isOutfit => listingType.toLowerCase() == 'outfit';
   bool get isAccessory => listingType.toLowerCase() == 'accessory';
@@ -428,6 +429,47 @@ class EditListingLogic extends ChangeNotifier {
       keepImageIds: keepImageIds,
       newPhotos: newPhotos,
     );
+  }
+  // --------------------------------------------------
+// DELETE LISTING
+// --------------------------------------------------
+
+  Future<bool> deleteListing() async {
+    if (isDeleting || isSaving) return false;
+
+    isDeleting = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      final token = SessionManager.getToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Session expired. Please login again.');
+      }
+
+      if (isOutfit) {
+        await OutfitApiRoutes.deleteVendorOutfit(
+          accessToken: token,
+          outfitId: listingId,
+        );
+      } else if (isAccessory) {
+        await AccessoryApiRoutes.deleteVendorAccessory(
+          accessToken: token,
+          accessoryId: listingId,
+        );
+      } else {
+        throw Exception('Invalid listing type.');
+      }
+
+      return true;
+    } catch (e) {
+      errorMessage = _cleanError(e);
+      return false;
+    } finally {
+      isDeleting = false;
+      notifyListeners();
+    }
   }
 
   // --------------------------------------------------

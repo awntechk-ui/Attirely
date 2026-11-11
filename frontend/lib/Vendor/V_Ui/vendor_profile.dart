@@ -1,9 +1,13 @@
-
 import 'package:flutter/material.dart';
 
 import 'package:attirely/Common_Screens/session_manager.dart';
-import 'package:attirely/Common_Screens/UI/add_outfit.dart';
 import 'package:attirely/app_routes.dart';
+
+import '../profile_widgets/about_attirely.dart';
+import '../profile_widgets/delete_vendor_account_page.dart';
+import '../profile_widgets/manage_store_information.dart';
+import '../profile_widgets/term_policies.dart';
+import '../profile_widgets/vendor_analytics.dart';
 
 class VendorProfile extends StatefulWidget {
   final ValueChanged<int>? onTabSelected;
@@ -18,26 +22,46 @@ class VendorProfile extends StatefulWidget {
 }
 
 class _VendorProfileState extends State<VendorProfile> {
-  static const Color burgundy = Color(0xFF800020);
-  static const Color burgundyLight = Color(0xFFA65C69);
-  static const Color gold = Color(0xFFC9A227);
-  static const Color ivory = Color(0xFFFBF8F2);
+  // Attirely brand palette
+  static const Color burgundy = Color(0xFF8E2945);
+  static const Color darkBurgundy = Color(0xFF4C1026);
+  static const Color gold = Color(0xFFE9D8B0);
+  static const Color cream = Color(0xFFFFFCF8);
   static const Color textColor = Color(0xFF321D25);
   static const Color muted = Color(0xFF8C747B);
+
+  static const LinearGradient topGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF4C1026),
+      Color(0xFF64172F),
+      Color(0xFF4C1026),
+    ],
+  );
 
   // ---------------------------------------------------------
   // NAVIGATION
   // ---------------------------------------------------------
 
   void _openTab(int index) {
+    // Uses VendorMain's existing IndexedStack and footer.
     widget.onTabSelected?.call(index);
   }
-
-  void _openAddOutfit() {
+  void _openDeleteAccountPage() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const AddOutfit(),
+        builder: (context) => const DeleteVendorAccountPage(),
+      ),
+    );
+  }
+
+  void _openManageStoreInformation() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ManageStoreInformation(),
       ),
     );
   }
@@ -46,7 +70,7 @@ class _VendorProfileState extends State<VendorProfile> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$page will be connected soon'),
-        backgroundColor: burgundy,
+        backgroundColor: darkBurgundy,
       ),
     );
   }
@@ -60,7 +84,7 @@ class _VendorProfileState extends State<VendorProfile> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: ivory,
+          backgroundColor: cream,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -105,7 +129,6 @@ class _VendorProfileState extends State<VendorProfile> {
 
     if (confirmed != true || !mounted) return;
 
-    // Restore the previous working logout flow.
     await SessionManager.clearToken();
 
     if (!mounted) return;
@@ -120,143 +143,134 @@ class _VendorProfileState extends State<VendorProfile> {
   // ---------------------------------------------------------
   // MAIN BUILD
   // ---------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Material(
-        color: Colors.transparent,
-        child: Stack(
-          children: [
-        // Background image
-        Positioned.fill(
-          child: Image.asset(
-            'assets/background/login_bg.png',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return const ColoredBox(
-                color: ivory,
-              );
-            },
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/background/login_bg.png',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const ColoredBox(color: cream);
+              },
+            ),
           ),
-        ),
 
-        // Light overlay for readability
-        Positioned.fill(
-          child: Container(
-            color: const Color(0xEFFFFFFF),
+          Positioned.fill(
+            child: Container(
+              color: const Color(0xEFFFFFFF),
+            ),
           ),
-        ),
 
-        SafeArea(
-          bottom: false,
-          child: RefreshIndicator(
-            color: burgundy,
-            onRefresh: () async {
-              // Vendor profile refresh can be connected to API logic later.
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 135),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
+          SafeArea(
+            bottom: false,
+            child: RefreshIndicator(
+              color: burgundy,
+              onRefresh: () async {
+                // Vendor profile refresh can be connected to API logic later.
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 135),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
 
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      16,
-                      22,
-                      16,
-                      20,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStoreCard(),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        16,
+                        22,
+                        16,
+                        20,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildStoreCard(),
 
-                        const SizedBox(height: 25),
+                          // BUSINESS OVERVIEW intentionally removed
+                          // from the visible profile page.
+                          // Previous implementation is retained below
+                          // in comments.
 
-                        _sectionHeading(
-                          'BUSINESS OVERVIEW',
-                          'Your store at a glance',
-                        ),
+                          const SizedBox(height: 25),
 
-                        const SizedBox(height: 12),
+                          _sectionHeading(
+                            'MANAGE YOUR STORE',
+                            'Your business operations',
+                          ),
 
-                        _buildPerformanceCards(),
+                          const SizedBox(height: 12),
 
-                        const SizedBox(height: 25),
+                          _buildStoreManagement(),
 
-                        _sectionHeading(
-                          'MANAGE YOUR STORE',
-                          'Your business operations',
-                        ),
+                          const SizedBox(height: 25),
 
-                        const SizedBox(height: 12),
+                          _sectionHeading(
+                            'CUSTOMER ACTIVITY',
+                            'Manage your customer interactions',
+                          ),
 
-                        _buildStoreManagement(),
+                          const SizedBox(height: 12),
 
-                        const SizedBox(height: 25),
+                          _buildCustomerActivity(),
 
-                        _sectionHeading(
-                          'CUSTOMER ACTIVITY',
-                          'Manage your customer interactions',
-                        ),
+                          const SizedBox(height: 25),
 
-                        const SizedBox(height: 12),
+                          _sectionHeading(
+                            'STORE SETTINGS',
+                            'Manage your business details',
+                          ),
 
-                        _buildCustomerActivity(),
+                          const SizedBox(height: 12),
 
-                        const SizedBox(height: 25),
+                          _buildStoreSettings(),
 
-                        _sectionHeading(
-                          'STORE SETTINGS',
-                          'Manage your business details',
-                        ),
+                          const SizedBox(height: 25),
 
-                        const SizedBox(height: 12),
+                          _sectionHeading(
+                            'ACCOUNT & SUPPORT',
+                            'Your account preferences',
+                          ),
 
-                        _buildStoreSettings(),
+                          const SizedBox(height: 12),
 
-                        const SizedBox(height: 25),
+                          _buildAccountSettings(),
 
-                        _sectionHeading(
-                          'ACCOUNT & SUPPORT',
-                          'Your account preferences',
-                        ),
+                          const SizedBox(height: 25),
 
-                        const SizedBox(height: 12),
+                          _buildLogoutButton(),
 
-                        _buildAccountSettings(),
+                          const SizedBox(height: 18),
 
-                        const SizedBox(height: 25),
 
-                        _buildLogoutButton(),
-
-                        const SizedBox(height: 18),
-
-                        const Center(
-                          child: Text(
-                            'Attirely • Vendor Portal',
-                            style: TextStyle(
-                              color: muted,
-                              fontSize: 12,
-                              letterSpacing: 0.5,
+                          const Center(
+                            child: Text(
+                              'Attirely • Vendor Portal',
+                              style: TextStyle(
+                                color: muted,
+                                fontSize: 12,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
-
 
   // ---------------------------------------------------------
   // HEADER
@@ -267,15 +281,7 @@ class _VendorProfileState extends State<VendorProfile> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 15, 18, 25),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            burgundyLight,
-            burgundy,
-            Color(0xFF511526),
-          ],
-        ),
+        gradient: topGradient,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(28),
           bottomRight: Radius.circular(28),
@@ -375,7 +381,7 @@ class _VendorProfileState extends State<VendorProfile> {
               color: const Color(0x33FFFFFF),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: const Color(0x66E8D5A7),
+                color: const Color(0x66E9D8B0),
               ),
             ),
             child: const Row(
@@ -386,7 +392,9 @@ class _VendorProfileState extends State<VendorProfile> {
                   color: gold,
                   size: 16,
                 ),
+
                 SizedBox(width: 7),
+
                 Text(
                   'ATTIRELY VENDOR',
                   style: TextStyle(
@@ -400,30 +408,7 @@ class _VendorProfileState extends State<VendorProfile> {
             ),
           ),
 
-          const SizedBox(height: 15),
-
-          OutlinedButton.icon(
-            onPressed: () => _showComingSoon('Edit Vendor Profile'),
-            icon: const Icon(
-              Icons.edit_outlined,
-              size: 17,
-            ),
-            label: const Text('Edit Profile'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(
-                color: gold,
-                width: 1.2,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 23,
-                vertical: 10,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
+          // Edit Profile button intentionally removed.
         ],
       ),
     );
@@ -486,7 +471,9 @@ class _VendorProfileState extends State<VendorProfile> {
                         letterSpacing: 1,
                       ),
                     ),
+
                     SizedBox(height: 4),
+
                     Text(
                       'Your Store Name',
                       style: TextStyle(
@@ -500,7 +487,7 @@ class _VendorProfileState extends State<VendorProfile> {
               ),
 
               IconButton(
-                onPressed: () => _showComingSoon('My Store'),
+                onPressed: _openManageStoreInformation,
                 icon: const Icon(
                   Icons.arrow_forward_ios,
                   color: burgundy,
@@ -526,7 +513,7 @@ class _VendorProfileState extends State<VendorProfile> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () => _showComingSoon('Store Information'),
+              onPressed: _openManageStoreInformation,
               style: OutlinedButton.styleFrom(
                 foregroundColor: burgundy,
                 side: const BorderSide(color: gold),
@@ -549,9 +536,10 @@ class _VendorProfileState extends State<VendorProfile> {
   }
 
   // ---------------------------------------------------------
-  // BUSINESS OVERVIEW - FOUR SQUARE CARDS
+  // BUSINESS OVERVIEW - RETAINED, NOT DISPLAYED
   // ---------------------------------------------------------
 
+  /*
   Widget _buildPerformanceCards() {
     return GridView.count(
       crossAxisCount: 2,
@@ -559,10 +547,7 @@ class _VendorProfileState extends State<VendorProfile> {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-
-      // Near-square cards instead of wide rectangles.
       childAspectRatio: 1.08,
-
       children: [
         _performanceCard(
           Icons.checkroom_outlined,
@@ -589,10 +574,10 @@ class _VendorProfileState extends State<VendorProfile> {
   }
 
   Widget _performanceCard(
-      IconData icon,
-      String title,
-      String value,
-      ) {
+    IconData icon,
+    String title,
+    String value,
+  ) {
     return Container(
       padding: const EdgeInsets.all(11),
       decoration: _cardDecoration(),
@@ -643,6 +628,7 @@ class _VendorProfileState extends State<VendorProfile> {
       ),
     );
   }
+  */
 
   // ---------------------------------------------------------
   // MANAGE YOUR STORE
@@ -657,12 +643,7 @@ class _VendorProfileState extends State<VendorProfile> {
             () => _openTab(1),
       ),
 
-      _menuTile(
-        Icons.add_box_outlined,
-        'Add New Listing',
-        'Upload a new outfit or accessory',
-        _openAddOutfit,
-      ),
+      // Add New Listing intentionally removed.
 
       _menuTile(
         Icons.calendar_month_outlined,
@@ -675,7 +656,7 @@ class _VendorProfileState extends State<VendorProfile> {
         Icons.store_mall_directory_outlined,
         'Store Information',
         'Edit your business details',
-            () => _showComingSoon('Store Information'),
+        _openManageStoreInformation,
       ),
     ]);
   }
@@ -718,7 +699,14 @@ class _VendorProfileState extends State<VendorProfile> {
         Icons.analytics_outlined,
         'Vendor Analytics',
         'Explore views, rentals and performance',
-            () => _showComingSoon('Vendor Analytics'),
+            () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const VendorAnalytics(),
+            ),
+          );
+        },
       ),
     ]);
   }
@@ -729,19 +717,19 @@ class _VendorProfileState extends State<VendorProfile> {
 
   Widget _buildStoreSettings() {
     return _menuCard([
-      _menuTile(
-        Icons.person_outline,
-        'Personal Information',
-        'Your name and contact details',
-            () => _showComingSoon('Personal Information'),
-      ),
+      // _menuTile(
+      //   Icons.person_outline,
+      //   'Personal Information',
+      //   'Your name and contact details',
+      //   _openManageStoreInformation,
+      // ),
 
-      _menuTile(
-        Icons.location_on_outlined,
-        'Business Address',
-        'Manage your store location',
-            () => _showComingSoon('Business Address'),
-      ),
+      // _menuTile(
+      //   Icons.location_on_outlined,
+      //   'Business Address',
+      //   'Manage your store location',
+      //   _openManageStoreInformation,
+      // ),
 
       _menuTile(
         Icons.badge_outlined,
@@ -778,6 +766,12 @@ class _VendorProfileState extends State<VendorProfile> {
         'Password and account security',
             () => _showComingSoon('Privacy & Security'),
       ),
+      _menuTile(
+        Icons.delete_forever_outlined,
+        'Delete Account',
+        'Permanently remove your vendor account',
+        _openDeleteAccountPage,
+      ),
 
       _menuTile(
         Icons.support_agent_outlined,
@@ -789,15 +783,29 @@ class _VendorProfileState extends State<VendorProfile> {
       _menuTile(
         Icons.info_outline,
         'About Attirely',
-        'Learn more about Attirely',
-            () => _showComingSoon('About Attirely'),
+        'Discover our story and vision',
+            () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const AboutAttirely(),
+            ),
+          );
+        },
       ),
 
       _menuTile(
         Icons.policy_outlined,
         'Terms & Policies',
-        'Vendor terms and platform policies',
-            () => _showComingSoon('Terms & Policies'),
+        'Read our guidelines and policies',
+            () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const TermsPolicies(),
+            ),
+          );
+        },
       ),
     ]);
   }
@@ -838,7 +846,7 @@ class _VendorProfileState extends State<VendorProfile> {
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
-      color: Colors.white.withOpacity(0.94),
+      color: Colors.white.withOpacity(0.96),
       borderRadius: BorderRadius.circular(17),
       border: Border.all(
         color: const Color(0xFFEFE8E5),
@@ -971,7 +979,7 @@ class _VendorProfileState extends State<VendorProfile> {
             color: gold,
             width: 1.5,
           ),
-          backgroundColor: Colors.white.withOpacity(0.75),
+          backgroundColor: Colors.white.withOpacity(0.80),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),

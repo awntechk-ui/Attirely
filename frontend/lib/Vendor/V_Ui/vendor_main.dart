@@ -1,7 +1,7 @@
 import 'package:attirely/Common_Screens/UI/add_outfit.dart';
 import 'package:attirely/Vendor/V_Ui/vendor_bookings.dart';
 import 'package:attirely/Vendor/V_Ui/vendor_dashboard.dart';
-import 'package:attirely/Common_Screens/UI/outfits.dart';
+import 'package:attirely/Vendor/V_Ui/vendor_outfit.dart';
 import 'package:attirely/Vendor/V_Ui/vendor_requests.dart';
 import 'package:flutter/material.dart';
 
@@ -25,10 +25,9 @@ class _VendorMainState extends State<VendorMain> {
 
     _pages = [
       const VendorDashboard(),
-      const Outfits(),
+      const VendorOutfit(),
       const VendorRequests(),
       const VendorBookings(),
-
     ];
   }
 
@@ -38,14 +37,14 @@ class _VendorMainState extends State<VendorMain> {
     });
   }
 
-  void _openAddOutfit() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddOutfit(),
-      ),
-    );
-  }
+  // void _openAddOutfit() {
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => const AddOutfit(),
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -69,26 +68,26 @@ class _VendorMainState extends State<VendorMain> {
             children: _pages,
           ),
 
-          if (_currentIndex == 1)
-            Positioned(
-              left: 32,
-              right: 32,
-              bottom: 100,
-              child: SizedBox(
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _openAddOutfit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: burgundy,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('＋ Add Outfit'),
-                ),
-              ),
-            ),
+          // if (_currentIndex == 1)
+          //   Positioned(
+          //     left: 32,
+          //     right: 32,
+          //     bottom: 100,
+          //     child: SizedBox(
+          //       height: 50,
+          //       child: ElevatedButton(
+          //         onPressed: _openAddOutfit,
+          //         style: ElevatedButton.styleFrom(
+          //           backgroundColor: burgundy,
+          //           foregroundColor: Colors.white,
+          //           shape: RoundedRectangleBorder(
+          //             borderRadius: BorderRadius.circular(12),
+          //           ),
+          //         ),
+          //         child: const Text('＋ Add Outfit'),
+          //       ),
+          //     ),
+          //   ),
 
           Positioned(
             left: 16,
