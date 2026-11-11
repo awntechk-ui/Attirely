@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'Common_Screens/UI/add_outfit.dart';
+import 'Common_Screens/UI/address_list_page.dart';
 import 'Common_Screens/UI/edit_listing_page.dart';
+import 'Common_Screens/UI/location_picker_page.dart';
 import 'Common_Screens/UI/login.dart';
 import 'Common_Screens/UI/outfits.dart';
 import 'Common_Screens/UI/register.dart';
@@ -40,6 +42,9 @@ class AppRoutes {
   static const String vendorUpgrade = '/vendor-upgrade';
   static const String vendorRequests = '/vendor-requests';
   static const String vendorBookings = '/vendor-bookings';
+  static const String locationPicker = '/location-picker';
+  static const String addressList = '/address-list';
+
 
   static final Map<String, WidgetBuilder> routes = {
     login: (context) => const LoginPage(),
@@ -78,6 +83,8 @@ class AppRoutes {
     vendorUpgrade: (context) => const VendorUpgrade(),
     vendorRequests: (context) => const VendorRequests(),
     vendorBookings: (context) => const VendorBookings(),
+    locationPicker: (context) => const LocationPickerPage(),
+    addressList: (context) => const AddressListPage(),
 
 
   };

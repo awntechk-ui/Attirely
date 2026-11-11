@@ -1,10 +1,12 @@
 
 import 'package:flutter/material.dart';
-
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../Common_Screens/UI/location_picker_page.dart';
 import '../U_Ui_Logic/trial_address_logic.dart';
 
 class AddTrialAddressPage extends StatefulWidget {
   final Map<String, dynamic>? address;
+
 
   const AddTrialAddressPage({
     super.key,
@@ -19,7 +21,9 @@ class AddTrialAddressPage extends StatefulWidget {
 class _AddTrialAddressPageState
     extends State<AddTrialAddressPage> {
   static const Color burgundy = Color(0xFF8E2945);
-
+  double? _latitude;
+  double? _longitude;
+  String? _selectedLocationText;
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -62,7 +66,10 @@ class _AddTrialAddressPageState
 
       addressType =
           address['address_type']?.toString() ?? 'Home';
+      _latitude = (address['latitude'] as num?)?.toDouble();
+      _longitude = (address['longitude'] as num?)?.toDouble();
     }
+
   }
 
   @override
@@ -97,8 +104,8 @@ class _AddTrialAddressPageState
       'state': _stateController.text.trim(),
       'pincode': _pincodeController.text.trim(),
       'address_type': addressType,
-      'latitude': widget.address?['latitude'],
-      'longitude': widget.address?['longitude'],
+      'latitude': _latitude,
+      'longitude': _longitude,
     };
 
     setState(() => isSaving = true);
@@ -153,11 +160,29 @@ class _AddTrialAddressPageState
     }
   }
 
-  void _comingSoon() {
+  Future<void> _chooseLocation() async {
+    final result = await Navigator.push<LatLng>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LocationPickerPage(
+          returnLocationOnly: true,
+        ),
+      ),
+    );
+
+    if (!mounted || result == null) return;
+
+    setState(() {
+      _latitude = result.latitude;
+      _longitude = result.longitude;
+      _selectedLocationText =
+      '${result.latitude.toStringAsFixed(6)}, '
+          '${result.longitude.toStringAsFixed(6)}';
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Current location feature is coming soon.'),
-        behavior: SnackBarBehavior.floating,
+        content: Text('Address location selected successfully.'),
       ),
     );
   }
@@ -261,9 +286,13 @@ class _AddTrialAddressPageState
             const SizedBox(height: 18),
 
             OutlinedButton.icon(
-              onPressed: _comingSoon,
+              onPressed: _chooseLocation,
               icon: const Icon(Icons.my_location),
-              label: const Text('Use Current Location'),
+              label: Text(
+                _latitude == null
+                    ? 'Choose Location on Map'
+                    : 'Change Selected Location',
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: burgundy,
                 side: const BorderSide(color: burgundy),
@@ -273,7 +302,17 @@ class _AddTrialAddressPageState
                 ),
               ),
             ),
-
+            if (_latitude != null && _longitude != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(
+                  'Selected location: $_selectedLocationText',
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
             const SizedBox(height: 22),
 
             const Text(

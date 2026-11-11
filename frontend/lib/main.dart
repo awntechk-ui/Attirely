@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'Common_Screens/UI/splash_screen.dart';
 import 'app_routes.dart';
 
@@ -22,14 +21,12 @@ class AttirelyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Attirely',
-
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: Colors.black,
       ),
 
       home: const SplashScreen(),
-
       routes: AppRoutes.routes,
     );
   }

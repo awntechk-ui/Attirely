@@ -10,7 +10,6 @@ import '../U_API_Routes/u_outfit_api_routes.dart';
 class HomeLogic extends ChangeNotifier {
   bool isCheckingVendor = false;
   bool isLoadingCatalogue = false;
-
   String? catalogueError;
 
   List<Map<String, dynamic>> featuredOutfits = [];

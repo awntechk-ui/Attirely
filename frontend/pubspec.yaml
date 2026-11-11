@@ -43,6 +43,9 @@ dependencies:
   flex_color_picker: ^3.7.1
   supabase_flutter: ^2.8.0
   mime: ^2.0.0
+  google_maps_flutter: ^2.18.1
+  geolocator: ^14.1.2
+  geocoding: ^5.0.1
 
 
 dev_dependencies:

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../Vendor/Vendor_API_Routes/vendor_auth_api_routes.dart';
 import '../../Vendor/Vendor_API_Routes/vendor_subscription_api_routes.dart';
 import '../API_Routes/auth_api_routes.dart';
+import '../API_Routes/location_api_routes.dart';
 import '../session_manager.dart';
 import '../../app_routes.dart';
 
@@ -24,113 +25,25 @@ class LoginLogic {
   String? selectedRole;
 
   bool isLoading = false;
+  Future<bool> _ensureLocationSetup(BuildContext context) async {
+    final location = await LocationApiRoutes.getMyLocation();
 
-  // =========================================================
-  // LOGIN
-  // =========================================================
+    final isCompleted =
+        location['location_setup_completed'] == true;
 
-  // Future<void> login(BuildContext context) async {
-  //   final email = emailController.text.trim();
-  //   final password = passwordController.text;
-  //
-  //   // =======================================================
-  //   // VALIDATION
-  //   // =======================================================
-  //
-  //   if (selectedRole == null) {
-  //     _showMessage(
-  //       context,
-  //       'Please select User or Vendor',
-  //     );
-  //     return;
-  //   }
-  //
-  //   if (email.isEmpty || password.isEmpty) {
-  //     _showMessage(
-  //       context,
-  //       'Please enter your email and password',
-  //     );
-  //     return;
-  //   }
-  //   if (password.length < 6) {
-  //     _showMessage(
-  //       context,
-  //       'Password must be at least 6 characters',
-  //     );
-  //     return;
-  //   }
-  //
-  //   // =======================================================
-  //   // API CALL
-  //   // =======================================================
-  //
-  //   try {
-  //     isLoading = true;
-  //
-  //     final response = await AuthApiRoutes.login(
-  //       email: email,
-  //       password: password,
-  //       role: selectedRole!,
-  //     );
-  //
-  //     final accessToken = response['access_token'];
-  //
-  //     if (accessToken == null ||
-  //         accessToken.toString().isEmpty) {
-  //       throw Exception(
-  //         'Access token not received',
-  //       );
-  //     }
-  //
-  //     // =====================================================
-  //     // SAVE SESSION
-  //     // =====================================================
-  //
-  //     await SessionManager.setToken(
-  //       accessToken.toString(),
-  //     );
-  //
-  //     if (!context.mounted) return;
-  //
-  //     // =====================================================
-  //     // ROUTE BASED ON VERIFIED ROLE
-  //     // =====================================================
-  //
-  //     final role = response['role'];
-  //
-  //     if (role == 'user') {
-  //       Navigator.pushReplacementNamed(
-  //         context,
-  //         AppRoutes.userMain,
-  //       );
-  //       return;
-  //     }
-  //
-  //     if (role == 'vendor') {
-  //       Navigator.pushReplacementNamed(
-  //         context,
-  //         AppRoutes.vendorMain,
-  //       );
-  //       return;
-  //     }
-  //
-  //     throw Exception(
-  //       'Unknown account role',
-  //     );
-  //   } catch (e) {
-  //     if (!context.mounted) return;
-  //
-  //     _showMessage(
-  //       context,
-  //       e.toString().replaceFirst(
-  //         'Exception: ',
-  //         '',
-  //       ),
-  //     );
-  //   } finally {
-  //     isLoading = false;
-  //   }
-  // }
+    if (isCompleted) {
+      return true;
+    }
+
+    if (!context.mounted) return false;
+
+    final result = await Navigator.pushNamed(
+      context,
+      AppRoutes.locationPicker,
+    );
+
+    return result == true;
+  }
   Future<void> login(BuildContext context) async {
     final email = emailController.text.trim();
     final password = passwordController.text;
@@ -192,6 +105,11 @@ class LoginLogic {
       // =====================================================
 
       if (role == 'user') {
+        final locationCompleted =
+        await _ensureLocationSetup(context);
+
+        if (!locationCompleted || !context.mounted) return;
+
         Navigator.pushReplacementNamed(
           context,
           AppRoutes.userMain,
@@ -224,6 +142,10 @@ class LoginLogic {
           );
           return;
         }
+        final locationCompleted =
+        await _ensureLocationSetup(context);
+
+        if (!locationCompleted || !context.mounted) return;
 
         // ---------------------------------------------------
         // CASE 2: VENDOR PROFILE EXISTS — CHECK SUBSCRIPTION
