@@ -72,6 +72,85 @@ class _VendorRequestsState extends State<VendorRequests>
     super.dispose();
   }
 
+  Widget _trialMethodOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required String value,
+    required String? selectedMethod,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = selectedMethod == value;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? burgundy.withOpacity(0.07)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: isSelected
+                ? gold
+                : burgundy.withOpacity(0.15),
+            width: isSelected ? 1.7 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 45,
+              width: 45,
+              decoration: BoxDecoration(
+                color: burgundy.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: burgundy,
+                size: 23,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: isSelected ? burgundy : muted,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // --------------------------------------------------
   // LOAD REQUESTS
   // --------------------------------------------------
@@ -170,50 +249,163 @@ class _VendorRequestsState extends State<VendorRequests>
         .length;
   }
 
-  // --------------------------------------------------
-  // ACCEPT REQUEST
-  // --------------------------------------------------
+
+// --------------------------------------------------
+// ACCEPT REQUEST
+// --------------------------------------------------
 
   Future<void> _acceptRequest(
       Map<String, dynamic> request,
       ) async {
+    String? selectedMethod;
+
+    // STEP 1: Select trial arrangement
+    final trialMethod = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFFFFFCF8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+              ),
+              title: const Text(
+                'Arrange the trial',
+                style: TextStyle(
+                  color: burgundy,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'How will you provide the outfit for the trial?',
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _trialMethodOption(
+                    title: 'Doorstep delivery',
+                    subtitle: 'I will deliver the outfit to the customer.',
+                    icon: Icons.local_shipping_outlined,
+                    value: 'doorstep_delivery',
+                    selectedMethod: selectedMethod,
+                    onTap: () {
+                      setDialogState(() {
+                        selectedMethod = 'doorstep_delivery';
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  _trialMethodOption(
+                    title: 'Visit my store',
+                    subtitle: 'The customer will visit my store.',
+                    icon: Icons.storefront_outlined,
+                    value: 'store_visit',
+                    selectedMethod: selectedMethod,
+                    onTap: () {
+                      setDialogState(() {
+                        selectedMethod = 'store_visit';
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: muted),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: selectedMethod == null
+                      ? null
+                      : () => Navigator.pop(
+                    dialogContext,
+                    selectedMethod,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: burgundy,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                    burgundy.withOpacity(0.25),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Continue'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (trialMethod == null) return;
+
+    if (!mounted) return;
+
+    // STEP 2: Final confirmation
+    final methodLabel = trialMethod == 'doorstep_delivery'
+        ? 'Doorstep delivery'
+        : 'Visit my store';
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
+          backgroundColor: const Color(0xFFFFFCF8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(22),
           ),
           title: const Text(
-            'Accept trial request?',
+            'Confirm acceptance?',
             style: TextStyle(
               color: burgundy,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
           content: Text(
-            'Do you want to accept the trial request from '
-                '${request['user_name'] ?? 'this customer'}?',
+            'You are accepting the trial request from '
+                '${request['user_name'] ?? 'this customer'} '
+                'with the following arrangement:\n\n'
+                '$methodLabel.\n\n'
+                'Do you want to continue?',
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.6,
+              color: textColor,
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text(
                 'Cancel',
                 style: TextStyle(color: muted),
               ),
             ),
             ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: burgundy,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
-              child: const Text('Accept'),
+              child: const Text('Confirm & Accept'),
             ),
           ],
         );
@@ -222,11 +414,14 @@ class _VendorRequestsState extends State<VendorRequests>
 
     if (confirmed != true) return;
 
+    // STEP 3: Save acceptance
     await _updateRequest(
       request: request,
       status: 'accepted',
+      trialMethod: trialMethod,
     );
   }
+
 
   // --------------------------------------------------
   // REJECT REQUEST
@@ -356,6 +551,7 @@ class _VendorRequestsState extends State<VendorRequests>
     await _updateRequest(
       request: request,
       status: 'rejected',
+      trialMethod: null,
       rejectionReason: reason,
     );
   }
@@ -367,6 +563,7 @@ class _VendorRequestsState extends State<VendorRequests>
   Future<void> _updateRequest({
     required Map<String, dynamic> request,
     required String status,
+    required String? trialMethod,
     String? rejectionReason,
   }) async {
     if (_isUpdating) return;
@@ -382,6 +579,7 @@ class _VendorRequestsState extends State<VendorRequests>
         accessToken: token,
         requestId: request['id'].toString(),
         status: status,
+        trialMethod: trialMethod,
         rejectionReason: rejectionReason,
       );
 

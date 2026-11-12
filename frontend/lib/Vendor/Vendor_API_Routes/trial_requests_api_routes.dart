@@ -28,7 +28,7 @@ class TrialRequestsApiRoutes {
     return 'Something went wrong. Please try again.';
   }
 
-  // GET ALL TRIAL REQUESTS FOR LOGGED-IN VENDOR
+  // GET ALL TRIAL REQUESTS
 
   static Future<List<Map<String, dynamic>>> getRequests({
     required String accessToken,
@@ -43,7 +43,8 @@ class TrialRequestsApiRoutes {
 
     final data = _decodeResponse(response.body);
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
       final rawRequests = data['requests'];
 
       if (rawRequests is List) {
@@ -59,14 +60,27 @@ class TrialRequestsApiRoutes {
     throw Exception(_errorMessage(data));
   }
 
-  // ACCEPT OR REJECT A TRIAL REQUEST
+  // ACCEPT OR REJECT TRIAL REQUEST
 
   static Future<Map<String, dynamic>> updateRequestStatus({
     required String accessToken,
     required String requestId,
     required String status,
+    required String? trialMethod,
     String? rejectionReason,
   }) async {
+    if (status == 'accepted' &&
+        trialMethod != 'doorstep_delivery' &&
+        trialMethod != 'store_visit') {
+      throw Exception('Please select a valid trial method.');
+    }
+
+    if (status == 'rejected' &&
+        (rejectionReason == null ||
+            rejectionReason.trim().isEmpty)) {
+      throw Exception('Please provide a rejection reason.');
+    }
+
     final response = await http.patch(
       Uri.parse(
         '${AppConfig.baseUrl}$_endpoint/$requestId/status',
@@ -78,14 +92,17 @@ class TrialRequestsApiRoutes {
       },
       body: jsonEncode({
         'status': status,
+        if (status == 'accepted')
+          'trial_method': trialMethod,
         if (status == 'rejected')
-          'rejection_reason': rejectionReason,
+          'rejection_reason': rejectionReason!.trim(),
       }),
     );
 
     final data = _decodeResponse(response.body);
 
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
       return data;
     }
 
