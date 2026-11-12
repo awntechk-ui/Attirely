@@ -6,6 +6,7 @@ import 'package:attirely/User/U_Ui/outfits.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../Common_Screens/services/device_location_service.dart';
 import '../../app_routes.dart';
 import '../../Common_Screens/session_manager.dart';
 
@@ -26,6 +27,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final HomeLogic logic;
+  String _currentLocation = 'Getting current location...';
+
+  Future<void> _loadCurrentLocation() async {
+    final location =
+    await DeviceLocationService.getCurrentLocationLabel();
+
+    if (!mounted) return;
+
+    setState(() {
+      _currentLocation = location;
+    });
+  }
 
   String _userName = 'Attirely Member';
 
@@ -53,6 +66,8 @@ class _HomePageState extends State<HomePage> {
     logic.loadCatalogue();
 
     _loadUserName();
+    _loadCurrentLocation();
+
   }
 
   // ==================================================
@@ -153,16 +168,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showLocationMessage() {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          content: Text('Location feature coming soon.'),
-          backgroundColor: burgundy,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+  void _openAddresses() {
+    Navigator.pushNamed(context, AppRoutes.addressList);
   }
 
   // ==================================================
@@ -333,28 +340,33 @@ class _HomePageState extends State<HomePage> {
 
                 const SizedBox(height: 5),
 
-                // LOCATION - TEMPORARY CLICK ACTION
+                // LIVE DEVICE LOCATION + MANAGE ADDRESSES
                 GestureDetector(
-                  onTap: _showLocationMessage,
+                  onTap: _openAddresses,
                   behavior: HitTestBehavior.opaque,
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.location_on_outlined,
                         color: Colors.white70,
                         size: 13,
                       ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Kurnool, AP',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          _currentLocation,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                      Icon(
+                      const SizedBox(width: 3),
+                      const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: Colors.white70,
                         size: 16,

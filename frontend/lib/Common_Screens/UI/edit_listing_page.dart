@@ -30,6 +30,7 @@ class _EditListingPageState extends State<EditListingPage> {
 
   bool get isOutfit => widget.listingType.toLowerCase() == 'outfit';
 
+
   @override
   void initState() {
     super.initState();
@@ -241,7 +242,8 @@ class _EditListingPageState extends State<EditListingPage> {
 
                         const SizedBox(height: 28),
                         _saveButton(),
-                      ],
+                        const SizedBox(height: 14),
+                        _deleteButton(),                      ],
                     ),
                   ),
                 ),
@@ -635,7 +637,7 @@ class _EditListingPageState extends State<EditListingPage> {
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        onPressed: logic.isSaving ? null : _save,
+        onPressed: (logic.isSaving || logic.isDeleting) ? null : _save,
         style: ElevatedButton.styleFrom(
           backgroundColor: burgundy,
           foregroundColor: Colors.white,
@@ -664,6 +666,133 @@ class _EditListingPageState extends State<EditListingPage> {
         ),
       ),
     );
+  }
+  // --------------------------------------------------
+// DELETE BUTTON
+// --------------------------------------------------
+
+  Widget _deleteButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton(
+        onPressed: (logic.isSaving || logic.isDeleting)
+            ? null
+            : _confirmDelete,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.red.shade700,
+          side: BorderSide(
+            color: Colors.red.shade300,
+            width: 1.2,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        child: logic.isDeleting
+            ? SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(
+            color: Colors.red.shade700,
+            strokeWidth: 2,
+          ),
+        )
+            : const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.delete_outline, size: 19),
+            SizedBox(width: 8),
+            Text(
+              'Delete Listing Permanently',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+// --------------------------------------------------
+// CONFIRM AND DELETE
+// --------------------------------------------------
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Delete Listing?',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: darkBurgundy,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to permanently delete this listing? '
+                'All its uploaded photos will also be deleted. '
+                'This action cannot be undone.',
+            style: TextStyle(fontSize: 13),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: darkBurgundy),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade700,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final success = await logic.deleteListing();
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Listing deleted successfully.'),
+          backgroundColor: burgundy,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            logic.errorMessage ?? 'Unable to delete listing.',
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _save() async {

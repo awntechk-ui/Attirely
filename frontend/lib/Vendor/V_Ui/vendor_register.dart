@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../Common_Screens/API_Routes/location_api_routes.dart';
 import '../../app_routes.dart';
 import '../V_Ui_Logic/vendor_register_logic.dart';
 
@@ -15,6 +16,7 @@ class VendorRegisterPage extends StatefulWidget {
 class _VendorRegisterPageState
     extends State<VendorRegisterPage> {
   late VendorRegisterLogic logic;
+  bool _vendorProfileCreated = false;
 
   static const Color burgundy = Color(0xFF800020);
   static const Color gold = Color(0xFFD4AF37);
@@ -349,17 +351,48 @@ class _VendorRegisterPageState
                       onPressed: logic.isLoading
                           ? null
                           : () async {
-                        final success =
-                        await logic.createVendorProfile(context);
+                        if (!_vendorProfileCreated) {
+                          final success = await logic.createVendorProfile(context);
 
-                        if (!success) return;
+                          if (!success || !context.mounted) return;
 
-                        if (!context.mounted) return;
+                          _vendorProfileCreated = true;
+                        }
 
-                        Navigator.pushReplacementNamed(
-                          context,
-                          AppRoutes.vendorDashboard,
-                        );
+                        try {
+                          final location = await LocationApiRoutes.getMyLocation();
+
+                          if (!context.mounted) return;
+
+                          final setupCompleted =
+                              location['location_setup_completed'] == true;
+
+                          if (!setupCompleted) {
+                            final result = await Navigator.pushNamed(
+                              context,
+                              AppRoutes.locationPicker,
+                            );
+
+                            if (result != true || !context.mounted) return;
+                          }
+
+                          if (!context.mounted) return;
+
+                          Navigator.pushReplacementNamed(
+                            context,
+                            AppRoutes.vendorDashboard,
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e.toString().replaceFirst('Exception: ', ''),
+                              ),
+                            ),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: burgundy,

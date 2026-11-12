@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'Common_Screens/UI/add_outfit.dart';
+import 'Common_Screens/UI/address_list_page.dart';
 import 'Common_Screens/UI/edit_listing_page.dart';
+import 'Common_Screens/UI/location_picker_page.dart';
 import 'Common_Screens/UI/login.dart';
 import 'User/U_Ui/outfits.dart';
 import 'Common_Screens/UI/register.dart';
@@ -10,12 +12,14 @@ import 'User/U_Ui/user_cart.dart';
 import 'User/U_Ui/home.dart';
 import 'User/U_Ui/user_main.dart';
 import 'User/U_Ui/user_rentals.dart';
+import 'Vendor/V_Ui/vendor_bookings.dart';
 import 'Vendor/V_Ui/vendor_dashboard.dart';
 import 'Vendor/V_Ui/vendor_main.dart';
 import 'Vendor/V_Ui/vendor_profile.dart';
 import 'Vendor/V_Ui/vendor_register.dart';
 import 'User/U_Ui/profile.dart';
-import 'Vendor/V_Ui/vendor_upgrade.dart';
+import 'Vendor/V_Ui/vendor_requests.dart';
+import 'Vendor/V_Ui/vendor_subscription_plan.dart';
 
 
 
@@ -36,6 +40,11 @@ class AppRoutes {
   static const String userCart = '/user-cart';
   static const String outfitDetails = '/outfit-details';
   static const String vendorUpgrade = '/vendor-upgrade';
+  static const String vendorRequests = '/vendor-requests';
+  static const String vendorBookings = '/vendor-bookings';
+  static const String locationPicker = '/location-picker';
+  static const String addressList = '/address-list';
+
 
   static final Map<String, WidgetBuilder> routes = {
     login: (context) => const LoginPage(),
@@ -70,6 +79,11 @@ class AppRoutes {
       );
     },
     vendorUpgrade: (context) => const VendorUpgrade(),
-  };
+    vendorRequests: (context) => const VendorRequests(),
+    vendorBookings: (context) => const VendorBookings(),
+    locationPicker: (context) => const LocationPickerPage(),
+    addressList: (context) => const AddressListPage(),
 
+
+  };
 }

@@ -347,4 +347,36 @@ class OutfitApiRoutes {
           .toString(),
     );
   }
+  // =========================================================
+// DELETE VENDOR OUTFIT
+// =========================================================
+
+  static Future<void> deleteVendorOutfit({
+    required String accessToken,
+    required String outfitId,
+  }) async {
+    final response = await http.delete(
+      Uri.parse(
+        '${AppConfig.baseUrl}/vendor/outfits/'
+            '${Uri.encodeComponent(outfitId)}',
+      ),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Accept': 'application/json',
+      },
+    );
+
+    final data = _decodeResponse(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+
+    throw Exception(
+      (data['detail'] ??
+          data['message'] ??
+          'Failed to delete outfit.')
+          .toString(),
+    );
+  }
 }

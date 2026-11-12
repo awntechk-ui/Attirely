@@ -317,4 +317,36 @@ class AccessoryApiRoutes {
 
     return <String, dynamic>{};
   }
+  // =========================================================
+// DELETE VENDOR ACCESSORY
+// =========================================================
+
+  static Future<void> deleteVendorAccessory({
+    required String accessToken,
+    required String accessoryId,
+  }) async {
+    final response = await http.delete(
+      Uri.parse(
+        '${AppConfig.baseUrl}/vendor/accessories/'
+            '${Uri.encodeComponent(accessoryId)}',
+      ),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Accept': 'application/json',
+      },
+    );
+
+    final data = _decodeResponse(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+
+    throw Exception(
+      (data['detail'] ??
+          data['message'] ??
+          'Failed to delete accessory.')
+          .toString(),
+    );
+  }
 }
