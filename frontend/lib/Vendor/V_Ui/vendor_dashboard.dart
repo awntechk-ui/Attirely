@@ -177,10 +177,9 @@ class _VendorDashboardState extends State<VendorDashboard> {
             _headerButton(
               Icons.notifications_none_rounded,
                   () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Notifications coming soon.'),
-                  ),
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.vendorNotifications,
                 );
               },
             ),

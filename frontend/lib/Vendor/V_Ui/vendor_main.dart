@@ -68,26 +68,6 @@ class _VendorMainState extends State<VendorMain> {
             children: _pages,
           ),
 
-          // if (_currentIndex == 1)
-          //   Positioned(
-          //     left: 32,
-          //     right: 32,
-          //     bottom: 100,
-          //     child: SizedBox(
-          //       height: 50,
-          //       child: ElevatedButton(
-          //         onPressed: _openAddOutfit,
-          //         style: ElevatedButton.styleFrom(
-          //           backgroundColor: burgundy,
-          //           foregroundColor: Colors.white,
-          //           shape: RoundedRectangleBorder(
-          //             borderRadius: BorderRadius.circular(12),
-          //           ),
-          //         ),
-          //         child: const Text('＋ Add Outfit'),
-          //       ),
-          //     ),
-          //   ),
 
           Positioned(
             left: 16,

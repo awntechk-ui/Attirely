@@ -15,6 +15,7 @@ import 'User/U_Ui/user_rentals.dart';
 import 'Vendor/V_Ui/vendor_bookings.dart';
 import 'Vendor/V_Ui/vendor_dashboard.dart';
 import 'Vendor/V_Ui/vendor_main.dart';
+import 'Vendor/V_Ui/vendor_notifications.dart';
 import 'Vendor/V_Ui/vendor_profile.dart';
 import 'Vendor/V_Ui/vendor_register.dart';
 import 'User/U_Ui/profile.dart';
@@ -44,6 +45,7 @@ class AppRoutes {
   static const String vendorBookings = '/vendor-bookings';
   static const String locationPicker = '/location-picker';
   static const String addressList = '/address-list';
+  static const String vendorNotifications = '/vendor-notifications';
 
 
   static final Map<String, WidgetBuilder> routes = {
@@ -85,6 +87,7 @@ class AppRoutes {
     vendorBookings: (context) => const VendorBookings(),
     locationPicker: (context) => const LocationPickerPage(),
     addressList: (context) => const AddressListPage(),
+    vendorNotifications: (context) => const VendorNotifications(),
 
 
   };
