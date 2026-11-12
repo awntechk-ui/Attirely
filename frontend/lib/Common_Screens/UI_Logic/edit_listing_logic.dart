@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../API_Routes/outfit_api_routes.dart';
+import '../../User/U_API_Routes/outfit_api_routes.dart';
 import '../API_Routes/accessory_api_routes.dart';
 import '../session_manager.dart';
 

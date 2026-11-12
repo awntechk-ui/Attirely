@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../API_Routes/outfit_api_routes.dart';
+import '../../User/U_API_Routes/outfit_api_routes.dart';
 import '../session_manager.dart';
 
 /// UI-only state for the men's outfit form.

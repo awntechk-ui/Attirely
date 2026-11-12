@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../U_Ui_Logic/profile_logic.dart';
 import '../../app_routes.dart';
+import 'my_rentals.dart';
+import 'my_trials.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -81,6 +83,24 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       );
     }
+  }
+
+  void _openMyTrials() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MyTrialsPage(),
+      ),
+    );
+  }
+
+  void _openMyRentals() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MyRentalsPage(),
+      ),
+    );
   }
 
   // =========================================================
@@ -633,6 +653,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildActivityList() {
     return _whiteListCard([
+      _listTile(
+        Icons.event_note_outlined,
+        'My Trails',
+        'Track your outfit trial bookings and history',
+        _openMyTrials,
+      ),
+      _listTile(
+        Icons.shopping_bag_outlined,
+        'My Rentals',
+        'Track your rental requests and active rentals',
+        _openMyRentals,
+      ),
       _listTile(
         Icons.star_border,
         'My Reviews',

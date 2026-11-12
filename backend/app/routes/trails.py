@@ -256,3 +256,143 @@ def book_trials(
             status_code=500,
             detail="Failed to create trial booking"
         )
+
+
+
+# ============================================================
+# GET LOGGED-IN USER'S TRIAL HISTORY
+# ============================================================
+
+@router.get("/my")
+def get_my_trials(current_user=Depends(get_current_user)):
+    user_id = str(current_user.id)
+
+    try:
+        # 1. Fetch only this user's trial requests.
+        trial_result = (
+            supabase.table("trial_requests")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        trial_rows = trial_result.data or []
+
+        if not trial_rows:
+            return {
+                "success": True,
+                "total": 0,
+                "trials": [],
+            }
+
+        # 2. Collect outfit and vendor IDs.
+        outfit_ids = list({
+            str(row["outfit_id"])
+            for row in trial_rows
+            if row.get("outfit_id")
+        })
+
+        vendor_ids = list({
+            str(row["vendor_id"])
+            for row in trial_rows
+            if row.get("vendor_id")
+        })
+
+        # 3. Fetch outfit details.
+        outfit_result = (
+            supabase.table("outfits")
+            .select(
+                "id,name,brand,description,gender,occasion,"
+                "category,rental_price,mrp,security_deposit,"
+                "material,color_name"
+            )
+            .in_("id", outfit_ids)
+            .execute()
+        )
+
+        outfits_by_id = {
+            str(item["id"]): item
+            for item in (outfit_result.data or [])
+        }
+
+        # 4. Fetch outfit images.
+        image_result = (
+            supabase.table("outfit_images")
+            .select(
+                "id,outfit_id,image_url,display_order,is_cover"
+            )
+            .in_("outfit_id", outfit_ids)
+            .order("display_order")
+            .execute()
+        )
+
+        images_by_outfit = {}
+
+        for image in image_result.data or []:
+            key = str(image["outfit_id"])
+            images_by_outfit.setdefault(key, []).append(image)
+
+        # 5. Fetch vendor/store names.
+        vendors_by_id = {}
+
+        if vendor_ids:
+            vendor_result = (
+                supabase.table("vendors")
+                .select("id,store_name,full_name,city")
+                .in_("id", vendor_ids)
+                .execute()
+            )
+
+            vendors_by_id = {
+                str(vendor["id"]): vendor
+                for vendor in (vendor_result.data or [])
+            }
+
+        # 6. Enrich every individual trial request.
+        formatted_trials = []
+
+        for trial in trial_rows:
+            outfit_id = str(trial.get("outfit_id", ""))
+            vendor_id = str(trial.get("vendor_id", ""))
+
+            outfit = outfits_by_id.get(outfit_id, {})
+            images = images_by_outfit.get(outfit_id, [])
+
+            cover = next(
+                (img for img in images if img.get("is_cover")),
+                images[0] if images else None,
+            )
+
+            vendor = vendors_by_id.get(vendor_id, {})
+
+            formatted_trials.append({
+                **trial,
+                "outfit": {
+                    **outfit,
+                    "images": images,
+                    "cover_image_url": (
+                        cover.get("image_url") if cover else None
+                    ),
+                },
+                "vendor": {
+                    "id": vendor.get("id"),
+                    "store_name": vendor.get("store_name"),
+                    "full_name": vendor.get("full_name"),
+                    "city": vendor.get("city"),
+                },
+            })
+
+        return {
+            "success": True,
+            "total": len(formatted_trials),
+            "trials": formatted_trials,
+        }
+
+    except Exception as exc:
+        print("GET MY TRIALS ERROR:", repr(exc))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch your trial history.",
+        )

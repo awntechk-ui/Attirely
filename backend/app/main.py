@@ -10,6 +10,7 @@ from app.routes.accessory import router as accessories_router
 from app.routes.user_profile import router as user_profile_router
 from app.routes.vendor_subscription import router as vendor_subscription_router
 from app.routes.trails import router as trails_router
+from app.routes.rentals import router as rentals_router
 
 app = FastAPI(
     title="User Backend",
@@ -33,6 +34,7 @@ app.include_router(accessories_router)
 app.include_router(user_profile_router)
 app.include_router(vendor_subscription_router)
 app.include_router(trails_router)
+app.include_router(rentals_router)
 
 @app.get("/")
 def root():

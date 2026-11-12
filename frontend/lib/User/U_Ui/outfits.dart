@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:attirely/User/U_Ui/user_bottom_navigation.dart';
+import 'package:attirely/User/U_Ui/user_cart.dart';
+
 import '../../app_routes.dart';
-import '../UI_Logic/outfit_logic.dart';
-import 'add_accessories.dart';
-import 'add_kids_outfit.dart';
-import 'add_outfit.dart';
-import 'add_men_outfit.dart';
-import 'outfit_details.dart';
+import '../U_Ui_Logic/outfit_logic.dart';
+import '../../Common_Screens/UI/add_accessories.dart';
+import '../../Common_Screens/UI/add_kids_outfit.dart';
+import '../../Common_Screens/UI/add_outfit.dart';
+import '../../Common_Screens/UI/add_men_outfit.dart';
+import '../../Common_Screens/UI/outfit_details.dart';
 
 class Outfits extends StatefulWidget {
   const Outfits({super.key});
@@ -54,74 +57,73 @@ class _OutfitsState extends State<Outfits> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: background,
-        body: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: systemStyle,
-          child: Container(
-        color: burgundy,
-        child: SafeArea(
-          top: true,
-          bottom: false,
-          child: Container(
-            color: background,
-            child: AnimatedBuilder(
-              animation: logic,
-              builder: (context, _) {
-                return Stack(
-                  children: [
-                    // Background image with a soft cream overlay.
-                    Positioned.fill(
-                      child: Image.asset(
-                        'assets/background/login_bg.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) {
-                          return Container(color: background);
-                        },
-                      ),
-                    ),
-
-                    Positioned.fill(
-                      child: Container(
-                        color: const Color(0xFFFCF9F6)
-                            .withValues(alpha: 0.90),
-                      ),
-                    ),
-
-                    RefreshIndicator(
-                      color: burgundy,
-                      backgroundColor: Colors.white,
-                      displacement: 38,
-                      triggerMode: RefreshIndicatorTriggerMode.onEdge,
-                      onRefresh: logic.refreshOutfits,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(
-                          parent: BouncingScrollPhysics(),
-                        ),
-                        padding: EdgeInsets.zero,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildHeader(),
-                            _buildStatistics(),
-                            const SizedBox(height: 9),
-                            _buildMainContent(),
-
-                            // Space above the shared floating navigation.
-                            SizedBox(
-                              height: 145 +
-                                  MediaQuery.of(context).viewPadding.bottom,
-                            ),
-                          ],
+      backgroundColor: background,
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: systemStyle,
+        child: Container(
+          color: burgundy,
+          child: SafeArea(
+            top: true,
+            bottom: false,
+            child: Container(
+              color: background,
+              child: AnimatedBuilder(
+                animation: logic,
+                builder: (context, _) {
+                  return Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.asset(
+                          'assets/background/login_bg.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) {
+                            return Container(color: background);
+                          },
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
+                      Positioned.fill(
+                        child: Container(
+                          color: const Color(0xFFFCF9F6)
+                              .withValues(alpha: 0.90),
+                        ),
+                      ),
+                      RefreshIndicator(
+                        color: burgundy,
+                        backgroundColor: Colors.white,
+                        displacement: 38,
+                        triggerMode: RefreshIndicatorTriggerMode.onEdge,
+                        onRefresh: logic.refreshOutfits,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          padding: EdgeInsets.zero,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildHeader(),
+                              _buildStatistics(),
+                              const SizedBox(height: 9),
+                              _buildMainContent(),
+                              SizedBox(
+                                height: 24 +
+                                    MediaQuery.of(context).viewPadding.bottom,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
-          ),
+      ),
+      bottomNavigationBar: UserBottomNavigation(
+        currentIndex: 1,
+        onTap: _openTab,
       ),
     );
   }
@@ -861,52 +863,52 @@ class _OutfitsState extends State<Outfits> {
                   ),
                 ),
                 const SizedBox(height: 5),
-            Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    '₹${_formatPrice(price)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: burgundy,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '₹${_formatPrice(price)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: burgundy,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    const Text(
+                      '/ rental',
+                      style: TextStyle(
+                        color: mutedText,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 5),
+
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => _editAccessory(
+                      (accessory['id'] ?? '').toString(),
+                    ),
+                    icon: const Icon(Icons.edit_outlined, size: 13),
+                    label: const Text(
+                      'Edit',
+                      style: TextStyle(fontSize: 10),
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: burgundy,
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                 ),
-                const SizedBox(width: 3),
-                const Text(
-                  '/ rental',
-                  style: TextStyle(
-                    color: mutedText,
-                    fontSize: 9,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 5),
-
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () => _editAccessory(
-                  (accessory['id'] ?? '').toString(),
-                ),
-                icon: const Icon(Icons.edit_outlined, size: 13),
-                label: const Text(
-                  'Edit',
-                  style: TextStyle(fontSize: 10),
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: burgundy,
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ),
               ],
             ),
           ),
@@ -1280,6 +1282,32 @@ class _OutfitsState extends State<Outfits> {
         ],
       ),
     );
+  }
+
+  // =========================================================
+  // BOTTOM NAVIGATION
+  // =========================================================
+
+  void _openTab(int index) {
+    // My Outfits is already selected.
+    if (index == 1) return;
+
+    switch (index) {
+      case 0:
+        Navigator.popUntil(context, (route) => route.isFirst);
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, AppRoutes.userRentals);
+        break;
+      case 3:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const UserCartPage(),
+          ),
+        );
+        break;
+    }
   }
 
   // =========================================================

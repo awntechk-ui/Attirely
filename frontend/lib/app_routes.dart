@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'Common_Screens/UI/add_outfit.dart';
 import 'Common_Screens/UI/edit_listing_page.dart';
 import 'Common_Screens/UI/login.dart';
-import 'Common_Screens/UI/outfits.dart';
+import 'User/U_Ui/outfits.dart';
 import 'Common_Screens/UI/register.dart';
 import 'User/U_Ui/rent_outfit_details.dart';
 import 'User/U_Ui/user_cart.dart';

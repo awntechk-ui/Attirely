@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../API_Routes/outfit_api_routes.dart';
+import '../../User/U_API_Routes/outfit_api_routes.dart';
 import '../session_manager.dart';
 
 class OutfitDetailsLogic extends ChangeNotifier {

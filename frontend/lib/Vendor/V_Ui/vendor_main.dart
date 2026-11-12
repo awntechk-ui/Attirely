@@ -1,7 +1,7 @@
 import 'package:attirely/Common_Screens/UI/add_outfit.dart';
 import 'package:attirely/Vendor/V_Ui/vendor_bookings.dart';
 import 'package:attirely/Vendor/V_Ui/vendor_dashboard.dart';
-import 'package:attirely/Common_Screens/UI/outfits.dart';
+import 'package:attirely/User/U_Ui/outfits.dart';
 import 'package:attirely/Vendor/V_Ui/vendor_requests.dart';
 import 'package:flutter/material.dart';
 
