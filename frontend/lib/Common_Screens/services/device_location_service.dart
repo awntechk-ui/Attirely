@@ -1,4 +1,3 @@
-
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
@@ -41,26 +40,27 @@ class DeviceLocationService {
 
       final place = placemarks.first;
 
-      final locality = place.locality?.trim() ?? '';
-      final subLocality = place.subLocality?.trim() ?? '';
-      final administrativeArea =
-          place.administrativeArea?.trim() ?? '';
+      final parts = <String>[
+        place.name?.trim() ?? '',
+        // place.subLocality?.trim() ?? '',
+        place.locality?.trim() ?? '',
+        // place.subAdministrativeArea?.trim() ?? '',
+        // place.administrativeArea?.trim() ?? '',
+        place.postalCode?.trim() ?? '',
+      ];
 
-      final parts = <String>[];
+      final uniqueParts = <String>[];
 
-      if (subLocality.isNotEmpty) {
-        parts.add(subLocality);
+      for (final part in parts) {
+        if (part.isNotEmpty &&
+            !uniqueParts.contains(part)) {
+          uniqueParts.add(part);
+        }
       }
 
-      if (locality.isNotEmpty) {
-        parts.add(locality);
-      } else if (administrativeArea.isNotEmpty) {
-        parts.add(administrativeArea);
-      }
-
-      return parts.isEmpty
+      return uniqueParts.isEmpty
           ? 'Current location detected'
-          : parts.join(', ');
+          : uniqueParts.join(', ');
     } catch (e) {
       return 'Unable to detect location';
     }
