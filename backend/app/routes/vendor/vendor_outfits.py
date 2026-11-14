@@ -1043,21 +1043,30 @@ async def update_vendor_outfit(
 # DELETE VENDOR OUTFIT
 # =========================================================
 
+
+# =========================================================
+# DELETE OUTFIT (SHARED: USER + VENDOR)
+# =========================================================
+
 @router.delete("/{outfit_id}")
 def delete_vendor_outfit(
     outfit_id: str,
-    vendor: dict = Depends(get_current_vendor),
+    current_user=Depends(get_current_user),
 ):
-    user_id = get_vendor_user_id(vendor)
+    # Both user and vendor outfits use the authenticated
+    # Supabase auth user's ID in the uploaded_by column.
+    user_id = str(current_user.id)
 
     try:
-        # Verify that this outfit belongs to the logged-in vendor.
+        # -------------------------------------------------
+        # 1. VERIFY OWNERSHIP (DO NOT FILTER BY ROLE)
+        # -------------------------------------------------
+
         existing = (
             supabase.table("outfits")
-            .select("id")
+            .select("id, name, role")
             .eq("id", outfit_id)
             .eq("uploaded_by", user_id)
-            .eq("role", "vendor")
             .limit(1)
             .execute()
         )
@@ -1065,10 +1074,55 @@ def delete_vendor_outfit(
         if not existing.data:
             raise HTTPException(
                 status_code=404,
-                detail="Outfit not found.",
+                detail="Outfit not found or you do not own this outfit.",
             )
 
-        # Get actual Storage paths from the database.
+        # -------------------------------------------------
+        # 2. CHECK TRIAL REQUESTS
+        # -------------------------------------------------
+
+        trial_result = (
+            supabase.table("trial_requests")
+            .select("id")
+            .eq("outfit_id", outfit_id)
+            .limit(1)
+            .execute()
+        )
+
+        if trial_result.data:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "This outfit cannot be deleted because "
+                    "trial requests already exist."
+                ),
+            )
+
+        # -------------------------------------------------
+        # 3. CHECK RENTAL BOOKINGS
+        # -------------------------------------------------
+
+        rental_result = (
+            supabase.table("rentals")
+            .select("id")
+            .eq("outfit_id", outfit_id)
+            .limit(1)
+            .execute()
+        )
+
+        if rental_result.data:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "This outfit cannot be deleted because "
+                    "rental booking records already exist."
+                ),
+            )
+
+        # -------------------------------------------------
+        # 4. GET IMAGE STORAGE PATHS
+        # -------------------------------------------------
+
         image_result = (
             supabase.table("outfit_images")
             .select("storage_path")
@@ -1082,39 +1136,131 @@ def delete_vendor_outfit(
             if image.get("storage_path")
         ]
 
-        # Delete the outfit. Its image database rows are
-        # deleted automatically by the foreign-key cascade.
-        (
+        # -------------------------------------------------
+        # 5. DELETE OUTFIT FROM DATABASE
+        # -------------------------------------------------
+
+        delete_result = (
             supabase.table("outfits")
             .delete()
             .eq("id", outfit_id)
             .eq("uploaded_by", user_id)
-            .eq("role", "vendor")
             .execute()
         )
 
-        # Delete the actual image files from Supabase Storage.
+        if not delete_result.data:
+            raise HTTPException(
+                status_code=500,
+                detail="Outfit could not be deleted.",
+            )
+
+        # outfit_images rows should be removed through
+        # the existing outfit_id foreign-key cascade.
+
+        # -------------------------------------------------
+        # 6. DELETE IMAGE FILES FROM SUPABASE STORAGE
+        # -------------------------------------------------
+
         if storage_paths:
             try:
-                supabase.storage.from_(BUCKET_NAME).remove(storage_paths)
-            except Exception as cleanup_error:
+                supabase.storage.from_(BUCKET_NAME).remove(
+                    storage_paths
+                )
+            except Exception as storage_error:
                 print(
-                    "VENDOR OUTFIT STORAGE DELETE ERROR:",
-                    repr(cleanup_error),
+                    "OUTFIT STORAGE DELETE ERROR:",
+                    repr(storage_error),
                 )
 
         return {
             "success": True,
             "message": "Outfit and its images deleted successfully.",
             "outfit_id": outfit_id,
+            "role": existing.data[0].get("role"),
         }
 
     except HTTPException:
         raise
 
     except Exception as exc:
-        print("DELETE VENDOR OUTFIT ERROR:", repr(exc))
+        print("SHARED OUTFIT DELETE ERROR:", repr(exc))
+
         raise HTTPException(
             status_code=500,
             detail="Failed to delete outfit. Please try again.",
         )
+# @router.delete("/{outfit_id}")
+# def delete_vendor_outfit(
+#     outfit_id: str,
+#     vendor: dict = Depends(get_current_vendor),
+# ):
+#     user_id = get_vendor_user_id(vendor)
+
+#     try:
+#         # Verify that this outfit belongs to the logged-in vendor.
+#         existing = (
+#             supabase.table("outfits")
+#             .select("id")
+#             .eq("id", outfit_id)
+#             .eq("uploaded_by", user_id)
+#             .eq("role", "vendor")
+#             .limit(1)
+#             .execute()
+#         )
+
+#         if not existing.data:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="Outfit not found.",
+#             )
+
+#         # Get actual Storage paths from the database.
+#         image_result = (
+#             supabase.table("outfit_images")
+#             .select("storage_path")
+#             .eq("outfit_id", outfit_id)
+#             .execute()
+#         )
+
+#         storage_paths = [
+#             image["storage_path"]
+#             for image in (image_result.data or [])
+#             if image.get("storage_path")
+#         ]
+
+#         # Delete the outfit. Its image database rows are
+#         # deleted automatically by the foreign-key cascade.
+#         (
+#             supabase.table("outfits")
+#             .delete()
+#             .eq("id", outfit_id)
+#             .eq("uploaded_by", user_id)
+#             .eq("role", "vendor")
+#             .execute()
+#         )
+
+#         # Delete the actual image files from Supabase Storage.
+#         if storage_paths:
+#             try:
+#                 supabase.storage.from_(BUCKET_NAME).remove(storage_paths)
+#             except Exception as cleanup_error:
+#                 print(
+#                     "VENDOR OUTFIT STORAGE DELETE ERROR:",
+#                     repr(cleanup_error),
+#                 )
+
+#         return {
+#             "success": True,
+#             "message": "Outfit and its images deleted successfully.",
+#             "outfit_id": outfit_id,
+#         }
+
+#     except HTTPException:
+#         raise
+
+#     except Exception as exc:
+#         print("DELETE VENDOR OUTFIT ERROR:", repr(exc))
+#         raise HTTPException(
+#             status_code=500,
+#             detail="Failed to delete outfit. Please try again.",
+#         )

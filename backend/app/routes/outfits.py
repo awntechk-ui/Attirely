@@ -25,7 +25,8 @@ router = APIRouter(
 )
 
 BUCKET_NAME = "outfit-images"
-MAX_IMAGES = 5
+MAX_IMAGES = 2
+MAX_OUTFITS_PER_USER = 5
 MAX_FILE_SIZE = 5 * 1024 * 1024
 ALLOWED_GENDERS = {
     "women",
@@ -186,7 +187,7 @@ async def create_outfit(
     if not photos or len(photos) > MAX_IMAGES:
         raise HTTPException(
             status_code=400,
-            detail="Upload between 1 and 5 outfit photos.",
+            detail="You can upload a maximum of 2 images per outfit. Please remove extra images.",
         )
 
     if size_type not in {"standard", "measurements"}:
@@ -266,6 +267,35 @@ async def create_outfit(
 
         photo.file.seek(0)
 
+    # User accounts can publish at most five outfits. Vendors are not
+    # subject to this user-account limit.
+    if uploader_role == "user":
+        try:
+            existing_user_outfits = (
+                supabase.table("outfits")
+                .select("id")
+                .eq("uploaded_by", user_id)
+                .eq("role", "user")
+                .execute()
+            )
+            outfit_count = len(existing_user_outfits.data or [])
+        except Exception as exc:
+            print("USER OUTFIT LIMIT CHECK ERROR:", repr(exc))
+            raise HTTPException(
+                status_code=500,
+                detail="Could not verify your outfit upload limit. Please try again.",
+            )
+
+        if outfit_count >= MAX_OUTFITS_PER_USER:
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "User limitations reached. You can upload only 5 outfits. "
+                    "Delete an outfit with zero trial requests and zero rental "
+                    "bookings to upload another outfit."
+                ),
+            )
+
     outfit_id = str(uuid.uuid4())
     uploaded_paths = []
     outfit_created = False
@@ -289,7 +319,7 @@ async def create_outfit(
         "sizes": parsed_sizes,
         "measurements": parsed_measurements,
         "material": material.strip() if material else None,
-"sleeve": sleeve.strip() if sleeve else None,
+        "sleeve": sleeve.strip() if sleeve else None,
         "status": "published",
         "is_available": True,
         "outfit_type": outfit_type,
@@ -521,6 +551,8 @@ async def update_outfit(
     current_user=Depends(get_current_user),
 
 ):
+
+
     user_id = str(current_user.id)
     gender = gender.strip().lower()
 
@@ -620,7 +652,7 @@ async def update_outfit(
         raise HTTPException(status_code=400, detail="At least one outfit image is required.")
 
     if len(retained_ids) + len(new_photos) > MAX_IMAGES:
-        raise HTTPException(status_code=400, detail="Maximum 5 outfit images allowed.")
+        raise HTTPException(status_code=400, detail="You can upload a maximum of 2 images per outfit.")
 
     # Validate new images
     validated_photos = []
@@ -665,7 +697,7 @@ async def update_outfit(
             "sizes": parsed_sizes,
             "measurements": parsed_measurements,
             "material": material.strip() if material else None,
-"sleeve": sleeve.strip() if sleeve else None,
+            "sleeve": sleeve.strip() if sleeve else None,
         }
 
         updated = (

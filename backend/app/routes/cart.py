@@ -222,6 +222,18 @@ def add_to_cart(
         outfit = outfit_result.data[0]
 
         # ----------------------------------------
+        # PREVENT ADDING OWN OUTFIT TO CART
+        # ----------------------------------------
+
+        uploaded_by = str(outfit.get("uploaded_by") or "")
+
+        if uploaded_by == user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You can't add your own outfit to cart."
+            )
+
+        # ----------------------------------------
         # CHECK AVAILABILITY
         # ----------------------------------------
 

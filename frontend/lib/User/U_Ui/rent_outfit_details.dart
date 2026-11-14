@@ -1768,7 +1768,15 @@ class _RentOutfitDetailsPageState extends State<RentOutfitDetails> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed: isAdded ? _openCart : _addToCart,
+                      onPressed: logic.isOwnOutfit
+                          ? null
+                          : () {
+                        if (isAdded) {
+                          _openCart();
+                        } else {
+                          _addToCart();
+                        }
+                      },
 
                       icon: Icon(
                         isAdded
@@ -1778,7 +1786,11 @@ class _RentOutfitDetailsPageState extends State<RentOutfitDetails> {
                       ),
 
                       label: Text(
-                        isAdded ? 'ADDED' : 'ADD TO CART',
+                        logic.isOwnOutfit
+                            ? "You can't add your own outfit"
+                            : isAdded
+                              ? 'ADDED'
+                              : 'ADD TO CART',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,

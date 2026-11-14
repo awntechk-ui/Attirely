@@ -131,13 +131,21 @@ def book_trials(
 
             outfit = outfit_response.data[0]
 
-            # Only vendor-uploaded outfits for this first version
-            if outfit["role"] != "vendor":
+            # Prevent users from booking their own outfits
+            if str(outfit["uploaded_by"]) == user_id:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"{outfit['name']} is not a vendor-uploaded outfit"
+                    detail="You cannot book a trail for your own outfit"
                 )
 
+            # Validate outfit role
+            if outfit["role"] not in ["vendor", "user"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid ownership role for {outfit['name']}"
+                )
+
+            # Validate outfit status
             if outfit["status"] != "published":
                 raise HTTPException(
                     status_code=400,
@@ -149,6 +157,29 @@ def book_trials(
                     status_code=400,
                     detail=f"{outfit['name']} is currently unavailable"
                 )
+
+            # Resolve owner
+            vendor_id = None
+
+            if outfit["role"] == "vendor":
+                vendor_response = (
+                    supabase.table("vendors")
+                    .select("id")
+                    .eq("auth_user_id", outfit["uploaded_by"])
+                    .limit(1)
+                    .execute()
+                )
+
+                if not vendor_response.data:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Vendor profile not found for {outfit['name']}"
+                    )
+
+                vendor_id = vendor_response.data[0]["id"]
+
+            outfit_owner_user_id = outfit["uploaded_by"]
+
 
             # Validate size against JSONB array, e.g. ["L"]
             available_sizes = outfit.get("sizes") or []
@@ -162,37 +193,19 @@ def book_trials(
                     )
                 )
 
-            # ------------------------------------------------
-            # 5. RESOLVE VENDOR FROM OUTFIT OWNER
-            # ------------------------------------------------
-
-            vendor_response = (
-                supabase.table("vendors")
-                .select("id")
-                .eq("auth_user_id", outfit["uploaded_by"])
-                .limit(1)
-                .execute()
-            )
-
-            if not vendor_response.data:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Vendor profile not found for {outfit['name']}"
-                )
-
-            vendor_id = vendor_response.data[0]["id"]
 
             # ------------------------------------------------
-            # 6. PREPARE ONE ROW PER OUTFIT
+            # 5. PREPARE ONE ROW PER OUTFIT
             # ------------------------------------------------
 
             trial_rows.append({
                 "booking_reference": booking_reference,
 
                 "user_id": user_id,
-                "vendor_id": vendor_id,
 
                 "outfit_id": outfit_id,
+                "vendor_id": vendor_id,
+                # "outfit_owner_user_id": outfit_owner_user_id,
 
                 "user_name": user_name,
                 "outfit_name": outfit["name"],

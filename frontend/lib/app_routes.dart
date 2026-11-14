@@ -11,7 +11,6 @@ import 'User/U_Ui/rent_outfit_details.dart';
 import 'User/U_Ui/user_cart.dart';
 import 'User/U_Ui/home.dart';
 import 'User/U_Ui/user_main.dart';
-import 'User/U_Ui/user_rentals.dart';
 import 'Vendor/V_Ui/vendor_bookings.dart';
 import 'Vendor/V_Ui/vendor_dashboard.dart';
 import 'Vendor/V_Ui/vendor_main.dart';

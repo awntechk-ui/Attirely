@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../Common_Screens/session_manager.dart';
 import '../U_API_Routes/u_outfit_api_routes.dart';
 
 class RentOutfitDetailsLogic extends ChangeNotifier {
@@ -8,6 +9,7 @@ class RentOutfitDetailsLogic extends ChangeNotifier {
   String? errorMessage;
 
   String? selectedSize;
+  bool isOwnOutfit = false;
 
   List<Map<String, dynamic>> vendorOutfits = [];
   bool isLoadingVendorOutfits = false;
@@ -26,6 +28,14 @@ class RentOutfitDetailsLogic extends ChangeNotifier {
       await UOutfitApiRoutes.getOutfitDetails(outfitId);
 
       outfit = result;
+      // Check whether the logged-in user owns this outfit
+      final currentUserId = await SessionManager.getUserId();
+      final uploadedBy = outfit?['uploaded_by']?.toString();
+
+      isOwnOutfit = currentUserId != null &&
+          uploadedBy != null &&
+          currentUserId.toString() == uploadedBy;
+
       isLoading = false;
       errorMessage = null;
 

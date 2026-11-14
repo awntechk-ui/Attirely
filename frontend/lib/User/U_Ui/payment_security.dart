@@ -1109,25 +1109,25 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
         return;
       }
 
-      // Remove only outfits confirmed by the backend.
-      // Failed outfits remain in the cart for another attempt.
-      final cart = UserCartLogic.instance;
-      final cartRemovalFailures = <String>[];
-
-      for (final item in successfulItems) {
-        final outfitId = item['outfit_id']?.toString() ?? '';
-        if (outfitId.isEmpty) continue;
-
-        final removed = await cart.removeOutfit(outfitId);
-        if (!removed) {
-          cartRemovalFailures.add(outfitId);
-        }
-      }
-
-      if (cartRemovalFailures.isNotEmpty) {
-        // Refresh server cart state if any cleanup call failed.
-        await cart.loadCart(refresh: true);
-      }
+      // // Remove only outfits confirmed by the backend.
+      // // Failed outfits remain in the cart for another attempt.
+      // final cart = UserCartLogic.instance;
+      // final cartRemovalFailures = <String>[];
+      //
+      // for (final item in successfulItems) {
+      //   final outfitId = item['outfit_id']?.toString() ?? '';
+      //   if (outfitId.isEmpty) continue;
+      //
+      //   final removed = await cart.removeOutfit(outfitId);
+      //   if (!removed) {
+      //     cartRemovalFailures.add(outfitId);
+      //   }
+      // }
+      //
+      // if (cartRemovalFailures.isNotEmpty) {
+      //   // Refresh server cart state if any cleanup call failed.
+      //   await cart.loadCart(refresh: true);
+      // }
 
       if (!mounted) return;
 
@@ -1137,7 +1137,7 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
         message: response['message']?.toString() ??
             '$successfulCount outfit(s) booked successfully.',
         hasSuccess: true,
-        cartRemovalFailures: cartRemovalFailures,
+        // cartRemovalFailures: cartRemovalFailures,
       );
 
     } catch (error) {
