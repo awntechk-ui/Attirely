@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../Vendor/V_Ui/vendor_bookings.dart';
+import '../../Vendor/V_Ui/vendor_requests.dart';
 import '../U_Ui_Logic/profile_logic.dart';
 import '../../app_routes.dart';
 import 'my_rentals.dart';
@@ -106,6 +107,17 @@ class _ProfilePageState extends State<ProfilePage> {
       context,
       MaterialPageRoute(
         builder: (_) => const VendorBookings(),
+      ),
+    );
+  }
+  void _openCustomerTrialRequests() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const Material(
+          color: Color(0xFFFFF8F5),
+          child: VendorRequests(),
+        ),
       ),
     );
   }
@@ -660,6 +672,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildActivityList() {
     return _whiteListCard([
+      _listTile(
+        Icons.calendar_month_outlined,
+        'Customer Trial Requests',
+        'Manage requests received for your outfits',
+        _openCustomerTrialRequests,
+      ),
       _listTile(
         Icons.calendar_month_outlined,
         'Customer Bookings',

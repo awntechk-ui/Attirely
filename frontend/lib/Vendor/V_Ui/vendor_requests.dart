@@ -25,6 +25,7 @@ class _VendorRequestsState extends State<VendorRequests>
   final List<String> _statuses = [
     'pending',
     'accepted',
+    'handed_over',
     'rejected',
     'completed',
   ];
@@ -32,6 +33,7 @@ class _VendorRequestsState extends State<VendorRequests>
   final List<String> _tabLabels = [
     'Pending',
     'Accepted',
+    'Handed Over',
     'Rejected',
     'Completed',
   ];
@@ -554,7 +556,127 @@ class _VendorRequestsState extends State<VendorRequests>
       rejectionReason: reason,
     );
   }
+  // --------------------------------------------------
+// HAND OVER TO CUSTOMER
+// --------------------------------------------------
 
+  Future<void> _handOverRequest(
+      Map<String, dynamic> request,
+      ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFFCF8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Confirm handover?',
+            style: TextStyle(
+              color: burgundy,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          content: Text(
+            'Have you handed over ${request['outfit_name'] ?? 'this outfit'} '
+                'to ${request['user_name'] ?? 'the customer'}?',
+            style: const TextStyle(
+              color: textColor,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: muted),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: burgundy,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Confirm Handover'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    await _updateRequest(
+      request: request,
+      status: 'handed_over',
+      trialMethod: null,
+    );
+  }
+
+
+// --------------------------------------------------
+// COMPLETE REQUEST
+// --------------------------------------------------
+
+  Future<void> _completeRequest(
+      Map<String, dynamic> request,
+      ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFFCF8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Complete trial?',
+            style: TextStyle(
+              color: burgundy,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          content: const Text(
+            'Confirm that the trial process for this outfit is completed.',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: muted),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: burgundy,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Complete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    await _updateRequest(
+      request: request,
+      status: 'completed',
+      trialMethod: null,
+    );
+  }
   // --------------------------------------------------
   // UPDATE REQUEST STATUS
   // --------------------------------------------------
@@ -587,9 +709,12 @@ class _VendorRequestsState extends State<VendorRequests>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            status == 'accepted'
-                ? 'Trial request accepted successfully.'
-                : 'Trial request rejected.',
+            {
+              'accepted': 'Trial request accepted successfully.',
+              'rejected': 'Trial request rejected.',
+              'handed_over': 'Outfit handed over to customer successfully.',
+              'completed': 'Trial completed successfully.',
+            }[status] ?? 'Request updated successfully.',
           ),
           backgroundColor: burgundy,
         ),
@@ -1062,6 +1187,55 @@ class _VendorRequestsState extends State<VendorRequests>
                 ],
               ),
             ],
+            // ACCEPTED → HANDED OVER
+
+            if (status == 'accepted') ...[
+              const SizedBox(height: 14),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isUpdating
+                      ? null
+                      : () => _handOverRequest(request),
+                  icon: const Icon(Icons.local_shipping_outlined),
+                  label: const Text('Handed Over to Customer'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: burgundy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+
+// HANDED OVER → COMPLETED
+
+            if (status == 'handed_over') ...[
+              const SizedBox(height: 14),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isUpdating
+                      ? null
+                      : () => _completeRequest(request),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Complete Trial'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: burgundy,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -1086,12 +1260,19 @@ class _VendorRequestsState extends State<VendorRequests>
       case 'accepted':
         color = Colors.green;
         break;
+
+      case 'handed_over':
+        color = Colors.deepPurple;
+        break;
+
       case 'rejected':
         color = Colors.red;
         break;
+
       case 'completed':
         color = Colors.blueGrey;
         break;
+
       default:
         color = const Color(0xFFE08A24);
     }
