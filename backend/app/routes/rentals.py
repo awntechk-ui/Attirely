@@ -6,7 +6,8 @@ from app.schemas.rentals import (
     RentalCheckoutResponse,
     RentalAvailabilityRequest,
     RentalAvailabilityResponse,
-    RentalActionRequest
+    RentalActionRequest,
+    RentalAcceptRequest,
 )
 
 from app.services.rentals_service import (
@@ -124,15 +125,15 @@ def owner_rental_requests(
 @router.patch("/{rental_id}/accept")
 def accept_rental(
     rental_id: str,
+    request: RentalAcceptRequest,
     current_user=Depends(get_current_user)
 ):
-
     return manage_rental_status(
         rental_id=rental_id,
         actor_user_id=current_user.id,
-        action="accept"
+        action="accept",
+        rent_method=request.rent_method
     )
-
 
 # ==========================================================
 # REJECT RENTAL
@@ -171,13 +172,12 @@ def cancel_rental(
         reason=request.reason
     )
 
-
 # ==========================================================
-# START RENTAL
+# HAND OVER OUTFIT TO CUSTOMER
 # ==========================================================
 
-@router.patch("/{rental_id}/start")
-def start_rental(
+@router.patch("/{rental_id}/handover")
+def handover_rental(
     rental_id: str,
     current_user=Depends(get_current_user)
 ):
@@ -185,8 +185,23 @@ def start_rental(
     return manage_rental_status(
         rental_id=rental_id,
         actor_user_id=current_user.id,
-        action="start"
+        action="handover"
     )
+# # ==========================================================
+# # START RENTAL
+# # ==========================================================
+
+# @router.patch("/{rental_id}/start")
+# def start_rental(
+#     rental_id: str,
+#     current_user=Depends(get_current_user)
+# ):
+
+#     return manage_rental_status(
+#         rental_id=rental_id,
+#         actor_user_id=current_user.id,
+#         action="start"
+#     )
 
 
 # ==========================================================

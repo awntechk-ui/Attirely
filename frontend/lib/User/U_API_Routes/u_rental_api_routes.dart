@@ -157,6 +157,133 @@ class RentalsApiRoutes {
 
     return data;
   }
+  static Future<List<dynamic>> getOwnerRentalRequests() async {
+    final token = await _getAccessToken();
 
+    final response = await http.get(
+      Uri.parse('$_baseUrl/owner/requests'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final data = _decodeResponse(response.body);
+
+    if (response.statusCode == 200) {
+      return data['rentals'] ?? [];
+    }
+
+    throw Exception(
+      data['detail'] ?? 'Failed to load rental requests',
+    );
+  }
+
+  static Future<Map<String, dynamic>> _ownerRentalAction(
+      String rentalId,
+      String action, {
+        String? reason,
+      }) async {
+    final token = await _getAccessToken();
+
+    final uri = Uri.parse('$_baseUrl/$rentalId/$action');
+
+    final response = await http.patch(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(
+        reason == null ? {} : {'reason': reason},
+      ),
+    );
+
+    final data = _decodeResponse(response.body);
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    throw Exception(
+      data['detail'] ?? 'Failed to $action rental',
+    );
+  }
+
+  // static Future<Map<String, dynamic>> acceptRental(
+  //     String rentalId,
+  //     ) {
+  //   return _ownerRentalAction(rentalId, 'accept');
+  // }
+
+  static Future<Map<String, dynamic>> acceptRental(
+      String rentalId,
+      String rentMethod,
+      ) async {
+    final token = await _getAccessToken();
+
+    final response = await http.patch(
+      Uri.parse('$_baseUrl/$rentalId/accept'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'rent_method': rentMethod,
+      }),
+    );
+
+    final data = _decodeResponse(response.body);
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
+      return data;
+    }
+
+    throw Exception(
+      data['detail'] ??
+          data['message'] ??
+          'Unable to accept rental.',
+    );
+  }
+  static Future<Map<String, dynamic>> rejectRental(
+      String rentalId,
+      String reason,
+      ) {
+    return _ownerRentalAction(
+      rentalId,
+      'reject',
+      reason: reason,
+    );
+  }
+
+  static Future<Map<String, dynamic>> cancelOwnerRental(
+      String rentalId,
+      String reason,
+      ) {
+    return _ownerRentalAction(
+      rentalId,
+      'cancel',
+      reason: reason,
+    );
+  }
+
+  // --------------------------------------------------
+// HANDOVER RENTAL
+// --------------------------------------------------
+
+  static Future<Map<String, dynamic>> handoverRental(
+      String rentalId,
+      ) {
+    return _ownerRentalAction(rentalId, 'handover');
+  }
+
+  static Future<Map<String, dynamic>> completeRental(
+      String rentalId,
+      ) {
+    return _ownerRentalAction(rentalId, 'complete');
+  }
 
 }

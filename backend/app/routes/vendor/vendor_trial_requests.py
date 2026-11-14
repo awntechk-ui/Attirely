@@ -1,6 +1,5 @@
-
 from datetime import datetime, timezone
-from typing import Literal, Optional
+from typing import Literal, Union
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,7 +7,6 @@ from pydantic import BaseModel, Field
 
 from app.core.auth_dependency import get_current_vendor
 from app.core.supabase import supabase_admin as supabase
-
 
 router = APIRouter(
     prefix="/vendor/trial-requests",
@@ -20,12 +18,28 @@ router = APIRouter(
 # REQUEST MODELS
 # ============================================================
 
-class TrialStatusUpdate(BaseModel):
-    status: Literal["accepted", "rejected"]
-    rejection_reason: Optional[str] = Field(
-        default=None,
+
+class TrialAcceptRequest(BaseModel):
+    status: Literal["accepted"]
+    trial_method: Literal[
+        "doorstep_delivery",
+        "store_visit"
+    ]
+
+
+class TrialRejectRequest(BaseModel):
+    status: Literal["rejected"]
+    rejection_reason: str = Field(
+        min_length=1,
         max_length=500,
     )
+
+
+TrialStatusUpdate = Union[
+    TrialAcceptRequest,
+    TrialRejectRequest,
+]
+
 
 
 # ============================================================
@@ -126,6 +140,7 @@ def get_vendor_trial_requests(
 # ACCEPT / REJECT TRIAL REQUEST
 # ============================================================
 
+
 @router.patch("/{request_id}/status")
 def update_trial_request_status(
     request_id: UUID,
@@ -134,32 +149,38 @@ def update_trial_request_status(
 ):
     try:
         vendor_id = str(vendor["id"])
-        new_status = payload.status
 
-        update_data = {
-            "status": new_status,
-        }
+        update_data = {}
 
-        # Validate rejection reason.
-        if new_status == "rejected":
-            reason = (payload.rejection_reason or "").strip()
+        # ACCEPT REQUEST
+        if payload.status == "accepted":
+
+            update_data = {
+                "status": "accepted",
+                "trial_method": payload.trial_method,
+                "accepted_at": datetime.now(
+                    timezone.utc
+                ).isoformat(),
+                "rejection_reason": None,
+            }
+
+        # REJECT REQUEST
+        elif payload.status == "rejected":
+
+            reason = payload.rejection_reason.strip()
 
             if not reason:
                 raise HTTPException(
                     status_code=400,
-                    detail="Please provide a rejection reason.",
+                    detail="Please provide a rejection reason."
                 )
 
-            update_data["rejection_reason"] = reason
+            update_data = {
+                "status": "rejected",
+                "rejection_reason": reason,
+            }
 
-        # Set acceptance timestamp.
-        elif new_status == "accepted":
-            update_data["accepted_at"] = (
-                datetime.now(timezone.utc).isoformat()
-            )
-            update_data["rejection_reason"] = None
-
-        # Update only a pending request belonging to this vendor.
+        # UPDATE ONLY PENDING REQUESTS
         updated = (
             supabase.table("trial_requests")
             .update(update_data)
@@ -171,16 +192,20 @@ def update_trial_request_status(
 
         if not updated.data:
             raise HTTPException(
-                status_code=404,
+                status_code=409,
                 detail=(
                     "Pending trial request not found. "
                     "It may already have been processed."
-                ),
+                )
             )
 
         return {
             "success": True,
-            "message": f"Trial request {new_status} successfully.",
+            "message": (
+                "Trial request accepted successfully."
+                if payload.status == "accepted"
+                else "Trial request rejected successfully."
+            ),
             "request": updated.data[0],
         }
 
@@ -192,5 +217,5 @@ def update_trial_request_status(
 
         raise HTTPException(
             status_code=500,
-            detail="Failed to update trial request.",
+            detail="Failed to update trial request."
         )

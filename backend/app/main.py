@@ -19,6 +19,10 @@ from app.routes.vendor.vendor_trial_requests import (
     router as vendor_trial_requests_router,
 )
 from app.routes import location
+from app.routes.vendor.vendor_notifications import (
+    router as vendor_notifications_router,
+)
+
 
 app = FastAPI(
     title="User Backend",
@@ -47,6 +51,7 @@ app.include_router(vendor_outfits_router)
 app.include_router(vendor_accessories_router)
 app.include_router(vendor_trial_requests_router)
 app.include_router(location.router)
+app.include_router(vendor_notifications_router)
 
 @app.get("/")
 def root():

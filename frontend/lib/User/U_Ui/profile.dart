@@ -1,9 +1,8 @@
 
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
+import '../../Vendor/V_Ui/vendor_bookings.dart';
 import '../U_Ui_Logic/profile_logic.dart';
 import '../../app_routes.dart';
 import 'my_rentals.dart';
@@ -99,6 +98,14 @@ class _ProfilePageState extends State<ProfilePage> {
       context,
       MaterialPageRoute(
         builder: (_) => const MyRentalsPage(),
+      ),
+    );
+  }
+  void _openCustomerBookings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const VendorBookings(),
       ),
     );
   }
@@ -653,6 +660,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildActivityList() {
     return _whiteListCard([
+      _listTile(
+        Icons.calendar_month_outlined,
+        'Customer Bookings',
+        'Manage bookings received for your outfits',
+        _openCustomerBookings,
+      ),
       _listTile(
         Icons.event_note_outlined,
         'My Trails',

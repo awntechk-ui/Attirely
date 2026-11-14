@@ -5,7 +5,11 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from pydantic import BaseModel
+from typing import Literal
 
+class RentalAcceptRequest(BaseModel):
+    rent_method: Literal["delivery", "pickup"]
 # ==========================================================
 # RENTAL ITEM REQUEST
 # ==========================================================

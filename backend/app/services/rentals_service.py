@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from app.core.supabase import supabase_admin
 
 
-ACTIVE_STATUSES = ["pending", "accepted", "active"]
+ACTIVE_STATUSES = ["pending", "accepted", "handed_over"]
 
 PLATFORM_FEE_PER_OUTFIT = 50
 
@@ -291,18 +291,129 @@ def get_vendor_rentals(vendor_id):
 
 def get_owner_rentals(owner_user_id):
 
-    response = (
+    owner_user_id = str(owner_user_id)
+
+    # ---------------------------------------------
+    # 1. Fetch individual-owner bookings
+    # ---------------------------------------------
+
+    owner_response = (
         supabase_admin
         .table("rentals")
         .select("*")
-        .eq("outfit_owner_user_id", str(owner_user_id))
+        .eq("outfit_owner_user_id", owner_user_id)
         .order("created_at", desc=True)
         .execute()
     )
 
-    return response.data or []
+    owner_rentals = owner_response.data or []
 
+    # ---------------------------------------------
+    # 2. Find vendor profile belonging to this user
+    # ---------------------------------------------
 
+    vendor_response = (
+        supabase_admin
+        .table("vendors")
+        .select("id")
+        .eq("auth_user_id", owner_user_id)
+        .limit(1)
+        .execute()
+    )
+
+    vendor_rentals = []
+
+    if vendor_response.data:
+
+        vendor_id = str(vendor_response.data[0]["id"])
+
+        # -----------------------------------------
+        # 3. Fetch registered-vendor bookings
+        # -----------------------------------------
+
+        vendor_booking_response = (
+            supabase_admin
+            .table("rentals")
+            .select("*")
+            .eq("vendor_id", vendor_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        vendor_rentals = vendor_booking_response.data or []
+
+    # ---------------------------------------------
+    # 4. Merge bookings without duplicates
+    # ---------------------------------------------
+
+    combined = {
+        rental["id"]: rental
+        for rental in owner_rentals
+    }
+
+    for rental in vendor_rentals:
+        combined[rental["id"]] = rental
+
+    rentals = list(combined.values())
+
+    rentals.sort(
+        key=lambda rental: rental.get("created_at") or "",
+        reverse=True
+    )
+
+    # ---------------------------------------------
+    # 5. Fetch customer details
+    # ---------------------------------------------
+
+    customer_ids = list({
+        rental["user_id"]
+        for rental in rentals
+        if rental.get("user_id")
+    })
+
+    customers = {}
+
+    if customer_ids:
+
+        users_response = (
+            supabase_admin
+            .table("users")
+            .select("id, full_name, phone_number")
+            .in_("id", customer_ids)
+            .execute()
+        )
+
+        customers = {
+            user["id"]: user
+            for user in (users_response.data or [])
+        }
+
+    # ---------------------------------------------
+    # 6. Attach customer details
+    # ---------------------------------------------
+
+    for rental in rentals:
+
+        customer = customers.get(
+            rental.get("user_id"),
+            {}
+        )
+
+        address = rental.get("delivery_address") or {}
+
+        rental["customer_name"] = (
+            customer.get("full_name")
+            or address.get("full_name")
+            or "Customer"
+        )
+
+        rental["customer_phone"] = (
+            customer.get("phone_number")
+            or address.get("mobile")
+            or ""
+        )
+
+    return rentals
 # ==========================================================
 # MANAGE RENTAL STATUS
 # ==========================================================
@@ -312,13 +423,14 @@ def manage_rental_status(
     rental_id,
     actor_user_id,
     action,
-    reason=None
+    reason=None,
+    rent_method=None
 ):
     expected_statuses = {
         "accept": "accepted",
         "reject": "rejected",
         "cancel": "cancelled",
-        "start": "active",
+        "handover": "handed_over",
         "complete": "completed",
     }
 
@@ -340,6 +452,7 @@ def manage_rental_status(
                 "p_actor_user_id": str(actor_user_id),
                 "p_action": action,
                 "p_reason": reason,
+                "p_rent_method": rent_method,
             }
         ).execute()
 
@@ -352,7 +465,7 @@ def manage_rental_status(
             verification = (
                 supabase_admin
                 .table("rentals")
-                .select("id, status")
+                .select("id, status, rent_method")
                 .eq("id", str(rental_id))
                 .limit(1)
                 .execute()
@@ -360,7 +473,14 @@ def manage_rental_status(
 
             rows = verification.data or []
 
-            if rows and rows[0].get("status") == expected_status:
+            if (
+                rows
+                and rows[0].get("status") == expected_status
+                and (
+                    action != "accept"
+                    or rows[0].get("rent_method") == rent_method
+                )
+            ):
                 print(
                     f"RENTAL STATUS VERIFIED: "
                     f"{rental_id} -> {expected_status}"
@@ -402,7 +522,11 @@ def manage_rental_status(
         if (
             "only pending" in lower_error
             or "only accepted" in lower_error
+            or "only handed-over" in lower_error
+            or "only handed over" in lower_error
             or "only active" in lower_error
+            or "return date" in lower_error
+            or "rental return date" in lower_error
         ):
             raise HTTPException(
                 status_code=409,
@@ -428,7 +552,7 @@ def manage_rental_status(
         verification = (
             supabase_admin
             .table("rentals")
-            .select("id, status")
+            .select("id, status, rent_method")
             .eq("id", str(rental_id))
             .limit(1)
             .execute()
@@ -449,6 +573,11 @@ def manage_rental_status(
                 status_code=409,
                 detail=f"Rental status is {actual_status}, "
                        f"expected {expected_status}"
+            )
+        if action == "accept" and rows[0].get("rent_method") != rent_method:
+            raise HTTPException(
+                status_code=409,
+                detail="Rental method was not saved correctly"
             )
 
         return {
