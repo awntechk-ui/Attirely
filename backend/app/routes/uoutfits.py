@@ -167,3 +167,116 @@ async def get_catalogue_outfit_details(outfit_id: str):
             status_code=500,
             detail="Failed to load outfit details.",
         )
+
+
+# ============================================================
+# CUSTOMER — GET OUTFITS FROM A PARTICULAR VENDOR
+# ============================================================
+
+@router.get("/vendor/{vendor_id}")
+async def get_vendor_outfits(
+    vendor_id: str,
+    exclude_outfit_id: str = None):
+    """
+    Return published and available outfits uploaded
+    by a particular vendor.
+
+    Includes outfit images and cover image URL.
+    Excludes the currently viewed outfit if provided.
+    """
+
+    try:
+        query = (
+            supabase.table("outfits")
+            .select("*")
+            .eq("uploaded_by", vendor_id)
+            .eq("status", "published")
+            .eq("is_available", True)
+        )
+
+        # Exclude currently opened outfit
+        if exclude_outfit_id:
+            query = query.neq("id", exclude_outfit_id)
+
+        result = (
+            query
+            .order("created_at", desc=True)
+            .limit(10)
+            .execute()
+        )
+
+        outfits = result.data or []
+
+        if not outfits:
+            return {
+                "success": True,
+                "count": 0,
+                "outfits": []
+            }
+
+        # Fetch images for these outfits only
+        outfit_ids = [
+            outfit["id"]
+            for outfit in outfits
+            if outfit.get("id")
+        ]
+
+        image_result = (
+            supabase.table("outfit_images")
+            .select(
+                "id,outfit_id,image_url,storage_path,"
+                "display_order,is_cover"
+            )
+            .in_("outfit_id", outfit_ids)
+            .order("display_order")
+            .execute()
+        )
+
+        # Group images by outfit ID
+        images_by_outfit = {}
+
+        for image in image_result.data or []:
+            outfit_id = image.get("outfit_id")
+
+            images_by_outfit.setdefault(
+                outfit_id, []
+            ).append(image)
+
+        # Attach images and cover image
+        for outfit in outfits:
+
+            images = images_by_outfit.get(
+                outfit.get("id"), []
+            )
+
+            outfit["images"] = images
+
+            cover = next(
+                (
+                    image for image in images
+                    if image.get("is_cover")
+                ),
+                images[0] if images else None
+            )
+
+            outfit["cover_image_url"] = (
+                cover.get("image_url") if cover else None
+            )
+
+        return {
+            "success": True,
+            "count": len(outfits),
+            "outfits": outfits
+        }
+
+    except Exception as exc:
+
+        print(
+            "GET VENDOR OUTFITS ERROR:",
+            repr(exc)
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to load vendor outfits."
+        )

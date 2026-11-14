@@ -293,17 +293,22 @@ class UserCartLogic extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final selectedSize = outfit['selected_size']?.toString();
+
       final response = await CartApiRoutes.addToCart(
         outfitId: outfitId,
+        selectedSize: selectedSize,
       );
 
       final cartItem = response['cart_item'];
 
       if (cartItem is Map) {
-        _items.insert(
-          0,
-          Map<String, dynamic>.from(cartItem),
-        );
+        final newItem = Map<String, dynamic>.from(cartItem);
+
+        // Preserve the selected size in the returned cart item.
+        newItem['selected_size'] ??= selectedSize;
+
+        _items.insert(0, newItem);
       } else {
         await loadCart();
       }

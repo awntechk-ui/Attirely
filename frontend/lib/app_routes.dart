@@ -5,7 +5,7 @@ import 'Common_Screens/UI/address_list_page.dart';
 import 'Common_Screens/UI/edit_listing_page.dart';
 import 'Common_Screens/UI/location_picker_page.dart';
 import 'Common_Screens/UI/login.dart';
-import 'Common_Screens/UI/outfits.dart';
+import 'User/U_Ui/outfits.dart';
 import 'Common_Screens/UI/register.dart';
 import 'User/U_Ui/rent_outfit_details.dart';
 import 'User/U_Ui/user_cart.dart';
@@ -28,7 +28,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String userMain = '/user-main';
-  static const String home = '/home';
+  static const String UserHome = '/home';
   static const String userOutfits = "/user-outifts";
   static const String vendorRegister = '/vendor-register';
   static const String vendorDashboard = '/vendor-dashboard';
@@ -52,7 +52,7 @@ class AppRoutes {
     login: (context) => const LoginPage(),
     register: (context) => const RegisterPage(),
     userMain: (context) => const UserMain(),
-    home: (context) => const HomePage(),
+    UserHome: (context) => const HomePage(),
 
     userOutfits: (context) => const Outfits(),
     vendorMain: (context) => VendorMain(),
@@ -61,8 +61,6 @@ class AppRoutes {
     addOutfit: (context) => const AddOutfit(),
     profile: (context) => const ProfilePage(),
     vendorProfile: (context) => const VendorProfile(),
-
-    userRentals: (context) => const UserRentals(),
     userCart: (context) => const UserCartPage(),
     outfitDetails: (context) {
       final args = ModalRoute.of(context)!.settings.arguments

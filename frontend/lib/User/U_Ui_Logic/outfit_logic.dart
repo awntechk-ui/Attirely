@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
-import '../API_Routes/outfit_api_routes.dart';
-import '../API_Routes/accessory_api_routes.dart';
-import '../session_manager.dart';
+import '../U_API_Routes/outfit_api_routes.dart';
+import '../../Common_Screens/API_Routes/accessory_api_routes.dart';
+import '../../Common_Screens/session_manager.dart';
 
 class OutfitsLogic extends ChangeNotifier {
   OutfitsLogic();
