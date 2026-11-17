@@ -30,12 +30,9 @@ class RentalCheckoutRequest(BaseModel):
         min_length=1,
         max_length=20
     )
-    payment_method: str = Field(
-        default="demo",
-        min_length=1,
-        max_length=50
-    )
-    delivery_address: Dict[str, Any]
+    delivery_address: Dict[str, Any] = Field(min_length=1)
+    couture_care: bool = False
+    coupon_code: Literal["HAUTE10"] | None = None
 
 
 # ==========================================================

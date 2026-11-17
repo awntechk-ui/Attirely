@@ -24,9 +24,6 @@ class _BookTrialPageState extends State<BookTrialPage> {
   static const Color darkGreen = Color(0xFF075C36);
   static const Color borderGreen = Color(0xFFDCEBE1);
 
-  bool _isSubmitting = false;
-
-
   late final BookTrialLogic logic;
 
   @override
@@ -306,7 +303,9 @@ class _BookTrialPageState extends State<BookTrialPage> {
     if (logic.isSubmitting) return;
 
     try {
-      final response = await logic.submitBooking();
+      final response = await logic.submitBooking(onConfirming: () {
+        if (mounted) setState(() {});
+      });
 
       if (!mounted) return;
 
@@ -346,9 +345,7 @@ class _BookTrialPageState extends State<BookTrialPage> {
                 ),
                 const SizedBox(height: 18),
                 Text('Outfits: $totalOutfits'),
-                Text(
-                  'Payment: ${response['payment_status'] ?? 'successful'}',
-                ),
+                const Text('Payment confirmed'),
                 Text('Amount: ₹$amount'),
                 const SizedBox(height: 12),
                 const Text(
@@ -756,7 +753,7 @@ class _BookTrialPageState extends State<BookTrialPage> {
                   ),
                 ),
                 Text(
-                  'Coming soon',
+                  'Test mode',
                   style: TextStyle(
                     color: burgundy,
                     fontWeight: FontWeight.w600,
@@ -1061,9 +1058,11 @@ class _BookTrialPageState extends State<BookTrialPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: _isSubmitting ? null : _continuePayment,
-                  child: _isSubmitting
-                      ? const SizedBox(
+                  onPressed: logic.isSubmitting ? null : _continuePayment,
+                  child: logic.isSubmitting
+                      ? logic.hasPendingPayment
+                          ? const Text('Confirming payment…')
+                          : const SizedBox(
                     height: 22,
                     width: 22,
                     child: CircularProgressIndicator(
@@ -1074,9 +1073,9 @@ class _BookTrialPageState extends State<BookTrialPage> {
                       : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Confirm Trial Booking',
-                        style: TextStyle(
+                      Text(
+                        logic.hasPendingPayment ? 'Check booking status' : 'Pay with Razorpay',
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),

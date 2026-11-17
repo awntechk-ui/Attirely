@@ -1,6 +1,6 @@
 
-from datetime import timedelta
-from uuid import uuid4
+from datetime import date, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import HTTPException
 
@@ -118,134 +118,57 @@ def check_rental_availability(items):
     }
 
 
-# ==========================================================
-# CREATE RENTAL BOOKING - PARTIAL BOOKING
-# ==========================================================
+def prepare_rental_checkout(user_id, request):
+    outfit_ids = [str(item.outfit_id) for item in request.items]
+    if len(set(outfit_ids)) != len(outfit_ids):
+        raise HTTPException(400, "The same outfit cannot be added twice")
+    if any(item.rental_start_date < date.today() for item in request.items):
+        raise HTTPException(400, "Rental start date cannot be in the past")
 
-def create_rental_booking(user_id, request):
-
-    booking_reference = str(uuid4())
-
-    # One demo transaction reference for the complete checkout.
-    transaction_reference = f"DEMO-{uuid4()}"
-
-    successful_items = []
-    failed_items = []
-    rental_ids = []
-
-    for item in request.items:
-
-        outfit_id = str(item.outfit_id)
-        selected_size = item.selected_size.strip()
-
-        item_details = {
-            "outfit_id": outfit_id,
-            "selected_size": selected_size,
-            "rental_start_date": item.rental_start_date.isoformat(),
-            "rental_days": item.rental_days,
-        }
-
-        try:
-
-            # IMPORTANT:
-            # Send exactly ONE outfit per RPC call.
-            # Each RPC call has its own database transaction.
-            response = supabase_admin.rpc(
-                "create_rental_booking",
-                {
-                    "p_user_id": str(user_id),
-                    "p_booking_reference": booking_reference,
-
-                    # Send only the current outfit.
-                    "p_items": [item_details],
-
-                    "p_payment_method": request.payment_method,
-
-                    # Use the transaction reference generated at checkout.
-                    "p_transaction_reference": transaction_reference,
-
-                    "p_platform_fee_per_outfit": PLATFORM_FEE_PER_OUTFIT,
-
-                    "p_delivery_address": request.delivery_address
-                }
-            ).execute()
-
-
-            result = response.data
-
-            if not result or not result.get("success"):
-                raise Exception(
-                    "Rental booking was not confirmed by the database."
-                )
-
-            created_ids = result.get("rental_ids") or []
-
-            if not created_ids:
-                raise Exception(
-                    "The database did not return a rental ID."
-                )
-
-            rental_id = str(created_ids[0])
-
-            rental_ids.append(rental_id)
-
-            successful_items.append({
-                **item_details,
-                "rental_id": rental_id,
-                "status": "pending",
-                "message": "Rental request successfully placed.",
-            })
-
-        except Exception as error:
-
-            print(
-                f"RENTAL BOOKING FAILED FOR OUTFIT {outfit_id}:",
-                repr(error)
-            )
-
-            failed_items.append({
-                **item_details,
-                "status": "failed",
-                "message": _get_rental_failure_message(error),
-            })
-
-            # Continue processing the remaining outfits.
-            continue
-
-    successful_count = len(successful_items)
-    failed_count = len(failed_items)
-
-    # At least one outfit must be booked for success=True.
-    success = successful_count > 0
-
-    partial_success = (
-        successful_count > 0 and failed_count > 0
+    response = (
+        supabase_admin.table("outfits")
+        .select("id, uploaded_by, status, is_available, rental_price, security_deposit")
+        .in_("id", outfit_ids)
+        .execute()
     )
+    outfits = {str(row["id"]): row for row in response.data}
+    availability = check_rental_availability(request.items)
+    rental_total = Decimal(0)
+    deposit_total = Decimal(0)
+    items = []
+    for item, available in zip(request.items, availability["items"]):
+        outfit = outfits.get(str(item.outfit_id))
+        if not outfit or outfit["status"] != "published" or not outfit["is_available"]:
+            raise HTTPException(409, "An outfit is no longer available")
+        if str(outfit["uploaded_by"]) == user_id:
+            raise HTTPException(400, "You cannot rent your own outfit")
+        if not available["available"]:
+            raise HTTPException(409, available["message"])
 
-    if successful_count == 0:
-        message = "No outfits could be booked. Please review the failures."
+        rate = Decimal(str(outfit["rental_price"] or 0))
+        deposit = Decimal(str(outfit["security_deposit"] or 0))
+        if rate <= 0:
+            raise HTTPException(409, "An outfit has an invalid rental price")
+        rental_total += rate * item.rental_days
+        deposit_total += deposit if deposit > 0 else Decimal(1000)
+        items.append({
+            **item.model_dump(mode="json"),
+            "selected_size": item.selected_size.strip(),
+            "quoted_rate": str(rate),
+            "quoted_deposit": str(deposit),
+        })
 
-    elif partial_success:
-        message = (
-            f"{successful_count} outfit(s) booked successfully. "
-            f"{failed_count} outfit(s) could not be booked."
-        )
-
-    else:
-        message = "All rental requests were successfully placed."
-
-    return {
-        "success": success,
-        "partial_success": partial_success,
-        "booking_reference": booking_reference,
-        "transaction_reference": transaction_reference,
-        "total_outfits": len(request.items),
-        "successful_count": successful_count,
-        "failed_count": failed_count,
-        "rental_ids": rental_ids,
-        "successful_items": successful_items,
-        "failed_items": failed_items,
-        "message": message,
+    discount = rental_total * Decimal("0.10") if request.coupon_code else Decimal(0)
+    care_fee = 299 if request.couture_care else 0
+    total = rental_total - discount + deposit_total + care_fee
+    total += PLATFORM_FEE_PER_OUTFIT * len(items)
+    amount_paise = int((total * 100).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+    return amount_paise, {
+        "items": items,
+        "delivery_address": request.delivery_address,
+        "platform_fee_per_outfit": PLATFORM_FEE_PER_OUTFIT,
+        "couture_care_fee": care_fee,
+        "discount": str(discount),
     }
 
 

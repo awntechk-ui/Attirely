@@ -1,3 +1,4 @@
+from app.routes.booking_payments import router as booking_payments_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.auth import router as auth_router
@@ -37,6 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(auth_router)
+app.include_router(booking_payments_router)
 app.include_router(vendor_router)
 app.include_router(outfits_router)
 app.include_router(uoutfits_router)

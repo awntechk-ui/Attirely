@@ -1,7 +1,7 @@
 
 import 'package:flutter/foundation.dart';
 
-import '../U_API_Routes/u_trial_api_routes.dart';
+import 'booking_checkout.dart';
 import 'trial_address_logic.dart';
 
 class BookTrialLogic extends ChangeNotifier {
@@ -271,24 +271,30 @@ class BookTrialLogic extends ChangeNotifier {
   // API SUBMISSION
   // =========================================================
 
-  Future<Map<String, dynamic>> submitBooking() async {
+  final _checkout = BookingCheckout();
+
+  bool get hasPendingPayment => _checkout.hasPendingPayment;
+
+  Future<Map<String, dynamic>> submitBooking({VoidCallback? onConfirming}) async {
     if (isSubmitting) {
       throw Exception('Booking is already being submitted.');
     }
 
-    validateBooking();
+    if (!hasPendingPayment) validateBooking();
 
     isSubmitting = true;
     notifyListeners();
 
     try {
-      final requestOutfits = buildBookingRequest();
+      final requestOutfits = hasPendingPayment ? [] : buildBookingRequest();
 
-      final response = await UserTrialApiRoutes.bookTrials(
-        outfits: requestOutfits,
+      return await _checkout.pay(
+        path: '/trials/book',
+        description: 'Outfit trial',
+        request: {'outfits': requestOutfits},
+        expectedAmount: (totalPayable * 100).round(),
+        onConfirming: onConfirming,
       );
-
-      return response;
     } finally {
       isSubmitting = false;
       notifyListeners();

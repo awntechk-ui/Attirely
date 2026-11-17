@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../U_API_Routes/u_rental_api_routes.dart';
-import '../U_Ui_Logic/user_cart_logic.dart';
+import '../U_Ui_Logic/booking_checkout.dart';
 import '../U_Ui_Logic/payment_security_logic.dart';
 
 class PaymentSecurityPage extends StatefulWidget {
@@ -38,8 +37,8 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
 
   late final PaymentSecurityLogic logic;
 
-  String get selectedMethod => logic.selectedMethod;
-  set selectedMethod(String value) => logic.selectMethod(value);
+  final _checkout = BookingCheckout();
+
   String get couponInput => logic.couponInput;
   set couponInput(String value) => logic.setCoupon(value);
   bool get couponApplied => logic.couponApplied;
@@ -50,10 +49,6 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
   }
   bool get isSubmitting => logic.isSubmitting;
   set isSubmitting(bool value) => logic.setSubmitting(value);
-  String get selectedSavedCard => logic.selectedSavedCard;
-  set selectedSavedCard(String value) => logic.selectSavedCard(value);
-
-  final TextEditingController cvvController = TextEditingController();
   final TextEditingController couponController =
   TextEditingController(text: 'HAUTE10');
 
@@ -156,7 +151,6 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
 
   @override
   void dispose() {
-    cvvController.dispose();
     couponController.dispose();
     logic.dispose();
     super.dispose();
@@ -459,275 +453,13 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
                 ),
                 const SizedBox(height: 5),
                 const Text(
-                  'Held safely and automatically released back to your original payment source within 24 hours of return pickup inspection.',
+                  'The security deposit is included in the Razorpay test total.',
                   style: TextStyle(fontSize: 12, color: muted, height: 1.5),
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _paymentHeading() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              'SELECT PAYMENT\nINSTRUMENT',
-              style: TextStyle(fontSize: 11, letterSpacing: .7, height: 1.35, color: darkGreen),
-            ),
-          ),
-          Text(
-            'ENCRYPTED & PCI\nCOMPLIANT',
-            textAlign: TextAlign.left,
-            style: TextStyle(fontSize: 10, letterSpacing: .8, height: 1.4, color: muted),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _methodRadio(String value) {
-    return Radio<String>(
-      value: value,
-      groupValue: selectedMethod,
-      activeColor: darkGreen,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      visualDensity: VisualDensity.compact,
-      onChanged: (next) {
-        if (next != null) setState(() => selectedMethod = next);
-      },
-    );
-  }
-
-  Widget _cardPaymentMethod() {
-    final selected = selectedMethod == 'card';
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: selected ? const Color(0xFF14251D) : border, width: selected ? 1.4 : 1),
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () => setState(() => selectedMethod = 'card'),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 14, 14, 14),
-              child: Row(
-                children: [
-                  _methodRadio('card'),
-                  const SizedBox(width: 3),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Luxury Credit & Debit Cards',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-                        SizedBox(height: 3),
-                        Text('VISA  •  MASTERCARD  •  AMEX  •  DINERS',
-                            style: TextStyle(fontSize: 9, letterSpacing: .7, color: muted)),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.credit_card_outlined, color: darkGreen, size: 19),
-                ],
-              ),
-            ),
-          ),
-          if (selected) ...[
-            const Divider(height: 1, color: border),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('SAVED ATELIER CARDS',
-                      style: TextStyle(fontSize: 9, letterSpacing: .9, color: muted)),
-                  const SizedBox(height: 12),
-                  _savedCard(
-                    name: 'HDFC Bank Infinia Metal',
-                    number: '•••• •••• •••• 4092',
-                    brand: 'INFINIA',
-                    selected: selectedSavedCard == 'HDFC Bank Infinia Metal',
-                    color: const Color(0xFF073F2B),
-                  ),
-                  const SizedBox(height: 10),
-                  _savedCard(
-                    name: 'ICICI Bank Emerald Card',
-                    number: '•••• •••• •••• 8821',
-                    brand: 'EMERALD',
-                    selected: selectedSavedCard == 'ICICI Bank Emerald Card',
-                    color: const Color(0xFF806B4D),
-                  ),
-                  const SizedBox(height: 9),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: _addCard,
-                      icon: const Icon(Icons.add, size: 14),
-                      label: const Text('ADD ANOTHER CARD',
-                          style: TextStyle(fontSize: 9, letterSpacing: .5)),
-                      style: TextButton.styleFrom(
-                        foregroundColor: darkGreen,
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _savedCard({
-    required String name,
-    required String number,
-    required String brand,
-    required bool selected,
-    required Color color,
-  }) {
-    return InkWell(
-      onTap: () => setState(() => selectedSavedCard = name),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 13),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3F5F2),
-          border: Border.all(color: selected ? const Color(0xFF9EB6A7) : border),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 21,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
-              child: Text(brand, style: const TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12)),
-                  const SizedBox(height: 2),
-                  Text(number, style: const TextStyle(fontSize: 11, color: muted, letterSpacing: .5)),
-                ],
-              ),
-            ),
-            if (selected)
-              SizedBox(
-                width: 64,
-                height: 32,
-                child: TextField(
-                  controller: cvvController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  obscureText: true,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 10, letterSpacing: 2),
-                  decoration: const InputDecoration(
-                    counterText: '',
-                    hintText: 'CVV',
-                    hintStyle: TextStyle(fontSize: 11, color: muted),
-                    contentPadding: EdgeInsets.symmetric(vertical: 6),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.zero),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: border),
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: darkGreen),
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                ),
-              )
-            else
-              Container(
-                width: 56,
-                height: 29,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(color: Colors.white, border: Border.all(color: border)),
-                child: const Text('CVV', style: TextStyle(fontSize: 11, color: muted)),
-              ),
-            const SizedBox(width: 7),
-            Icon(selected ? Icons.circle : Icons.circle_outlined,
-                size: 8, color: selected ? green : border),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _simpleMethod({
-    required String value,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    String? tag,
-    String? trailingTag,
-  }) {
-    final selected = selectedMethod == value;
-    return InkWell(
-      onTap: () => setState(() => selectedMethod = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: selected ? const Color(0xFF14251D) : border, width: selected ? 1.3 : 1),
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(.02), blurRadius: 6, offset: const Offset(0, 2)),
-          ],
-        ),
-        child: Row(
-          children: [
-            _methodRadio(value),
-            const SizedBox(width: 3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 7,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(title, style: const TextStyle(fontSize: 15)),
-                      if (tag != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          color: const Color(0xFFE1EEDF),
-                          child: Text(tag, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold)),
-                        ),
-                      if (trailingTag != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          color: const Color(0xFFFFE0B5),
-                          child: Text(trailingTag, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold)),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(fontSize: 10, color: muted, letterSpacing: .4)),
-                ],
-              ),
-            ),
-            Icon(icon, size: 18, color: darkGreen),
-          ],
-        ),
       ),
     );
   }
@@ -896,56 +628,6 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
     );
   }
 
-  Widget _trustGrid() {
-    final items = [
-      (Icons.verified_user_outlined, '256-BIT PROTECTION', 'PCI-DSS bank grade security'),
-      (Icons.straighten_outlined, 'FIT GUARANTEE', 'Doorstep styling & swap backup'),
-      (Icons.support_agent_outlined, '24/7 CONCIERGE', 'Dedicated atelier stylist assistance'),
-      (Icons.refresh, 'INSTANT RELEASE', 'Automatic deposit refund in 24h'),
-    ];
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F3F0),
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: border),
-      ),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: items.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 8,
-          childAspectRatio: 2.7,
-        ),
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(item.$1, size: 16, color: darkGreen),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.$2, maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: .35)),
-                    const SizedBox(height: 3),
-                    Text(item.$3, maxLines: 2, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 9, color: muted, height: 1.3)),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   Widget _bottomBar() {
     return SafeArea(
       top: false,
@@ -989,7 +671,12 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
                 icon: isSubmitting
                     ? const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.check_circle_outline, size: 15),
-                label: Text(isSubmitting ? 'PLACING RENTAL REQUESTS...' : 'CONFIRM DEMO BOOKING',
+                label: Text(
+                  isSubmitting
+                      ? (_checkout.hasPendingPayment ? 'Confirming payment…' : 'Opening checkout…')
+                      : _checkout.hasPendingPayment
+                          ? 'CHECK BOOKING STATUS'
+                          : 'PAY WITH RAZORPAY',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: .3)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: green,
@@ -1015,24 +702,6 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _addCard() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Add a card'),
-        content: const Text(
-          'Connect your payment gateway here to securely add and tokenize a new card. Card details should not be stored directly in the app.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('CLOSE', style: TextStyle(color: green)),
-          ),
-        ],
       ),
     );
   }
@@ -1072,11 +741,19 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
         showMessage('Please select a delivery address.');
         return;
       }
-      // This is a simulated booking confirmation only.
-      // No card details/CVV are sent and no real payment is collected.
-      final response = await RentalsApiRoutes.createRentalBooking(
-        items: requestItems,
-        deliveryAddress: Map<String, dynamic>.from(widget.deliveryAddress),
+      final response = await _checkout.pay(
+        path: '/rentals/create',
+        description: 'Outfit rental',
+        request: {
+          'items': requestItems,
+          'delivery_address': widget.deliveryAddress,
+          'couture_care': widget.coutureCareEnabled,
+          if (couponApplied) 'coupon_code': 'HAUTE10',
+        },
+        expectedAmount: (totalDue * 100).round(),
+        onConfirming: () {
+          if (mounted) setState(() {});
+        },
       );
 
       final successfulItems =
@@ -1094,9 +771,6 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
       final successfulCount =
           (response['successful_count'] as num?)?.toInt() ??
               successfulItems.length;
-      final failedCount =
-          (response['failed_count'] as num?)?.toInt() ??
-              failedItems.length;
 
       if (successfulCount == 0 || successfulItems.isEmpty) {
         await _showBookingResultDialog(
@@ -1175,7 +849,7 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
             const SizedBox(width: 9),
             Expanded(
               child: Text(
-                hasSuccess ? 'Booking Result' : 'Booking Unsuccessful',
+                hasSuccess ? 'Rental booked successfully' : 'Booking unsuccessful',
               ),
             ),
           ],
@@ -1233,11 +907,16 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 12),
-                const Text(
-                  'Demo booking only. No real payment was collected.',
-                  style: TextStyle(fontSize: 11, color: muted),
-                ),
+                if (hasSuccess) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Payment confirmed',
+                    style: TextStyle(
+                      color: green,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1283,48 +962,22 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
                     const SizedBox(height: 18),
                     _securityDepositCard(),
                     const SizedBox(height: 21),
-                    _paymentHeading(),
-                    const SizedBox(height: 12),
-                    _cardPaymentMethod(),
-                    const SizedBox(height: 12),
-                    _simpleMethod(
-                      value: 'upi',
-                      title: 'UPI / Instant Pay',
-                      subtitle: 'GOOGLE PAY  •  PHONEPE  •  CRED UPI',
-                      icon: Icons.qr_code_2,
-                      tag: 'POPULAR',
+                    AbsorbPointer(
+                      absorbing: isSubmitting || _checkout.hasPendingPayment,
+                      child: _couponSection(),
                     ),
-                    const SizedBox(height: 12),
-                    _simpleMethod(
-                      value: 'emi',
-                      title: 'No-Cost Couture EMI',
-                      subtitle: 'FROM ₹3,965/MO FOR 3 MONTHS',
-                      icon: Icons.calendar_month_outlined,
-                      trailingTag: '0% INTEREST',
-                    ),
-                    const SizedBox(height: 12),
-                    _simpleMethod(
-                      value: 'netbanking',
-                      title: 'Net Banking',
-                      subtitle: 'HDFC, ICICI, SBI, AXIS & 40+ BANKS',
-                      icon: Icons.account_balance_outlined,
-                    ),
-                    const SizedBox(height: 19),
-                    _couponSection(),
                     const SizedBox(height: 12),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(11),
                       color: paleGreen,
                       child: const Text(
-                        'DEMO PAYMENT — No real charge will be made. Card/CVV details are not collected.',
+                        'Razorpay test mode. No money will be charged.',
                         style: TextStyle(fontSize: 11, color: darkGreen),
                       ),
                     ),
                     const SizedBox(height: 19),
                     _investmentBreakdown(),
-                    const SizedBox(height: 15),
-                    _trustGrid(),
                   ],
                 ),
               ),

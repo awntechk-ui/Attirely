@@ -3,13 +3,14 @@
 
 from datetime import date
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app.core.auth_dependency import get_current_user
 from app.core.supabase import supabase_admin as supabase
+from app.services.booking_payments import create_checkout
 
 
 router = APIRouter(
@@ -80,12 +81,6 @@ def book_trials(
                 status_code=400,
                 detail="The same outfit cannot be added twice"
             )
-
-        # ----------------------------------------------------
-        # 3. GENERATE COMMON BOOKING REFERENCE
-        # ----------------------------------------------------
-
-        booking_reference = str(uuid4())
 
         trial_rows = []
 
@@ -199,8 +194,6 @@ def book_trials(
             # ------------------------------------------------
 
             trial_rows.append({
-                "booking_reference": booking_reference,
-
                 "user_id": user_id,
 
                 "outfit_id": outfit_id,
@@ -223,41 +216,13 @@ def book_trials(
                 "status": "pending",
                 "rejection_reason": None,
 
-                # Dummy payment for now
-                "payment_status": "successful",
-                "payment_method": "dummy",
-                "payment_reference": f"DUMMY-{booking_reference}",
-
                 "trial_fee": 150,
                 "platform_fee": 50,
                 "trial_amount": 200,
             })
 
-        # ----------------------------------------------------
-        # 7. INSERT ALL OUTFIT REQUESTS
-        # ----------------------------------------------------
-
-        insert_response = (
-            supabase.table("trial_requests")
-            .insert(trial_rows)
-            .execute()
-        )
-
-        if not insert_response.data:
-            raise HTTPException(
-                status_code=500,
-                detail="Could not create trial booking"
-            )
-
-        return {
-            "success": True,
-            "message": "Trial booking created successfully",
-            "booking_reference": booking_reference,
-            "payment_status": "successful",
-            "total_outfits": len(insert_response.data),
-            "total_amount": len(insert_response.data) * 200,
-            "requests": insert_response.data
-        }
+        amount_paise = sum(row["trial_amount"] for row in trial_rows) * 100
+        return create_checkout(user_id, "trial", amount_paise, {"rows": trial_rows})
 
     except HTTPException:
         raise

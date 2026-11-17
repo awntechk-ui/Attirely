@@ -45,34 +45,6 @@ class UserTrialApiRoutes {
     );
   }
 
-  static Future<Map<String, dynamic>> bookTrials({required List<Map<String, dynamic>> outfits,}) async {
-    final token = await _getAccessToken();
-
-    final response = await http.post(
-      Uri.parse('$_baseUrl/book'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'outfits': outfits,
-      }),
-    );
-
-    final data = _decodeResponse(response.body);
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final message = data['detail'] ??
-          data['message'] ??
-          'Could not complete trial booking.';
-
-      throw Exception(message.toString());
-    }
-
-    return data;
-  }
-
   static Future<List<Map<String, dynamic>>> getMyTrials() async {
     final token = await _getAccessToken();
 

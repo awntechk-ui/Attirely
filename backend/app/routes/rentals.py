@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends
 
 from app.schemas.rentals import (
     RentalCheckoutRequest,
-    RentalCheckoutResponse,
     RentalAvailabilityRequest,
     RentalAvailabilityResponse,
     RentalActionRequest,
@@ -12,12 +11,14 @@ from app.schemas.rentals import (
 
 from app.services.rentals_service import (
     check_rental_availability,
-    create_rental_booking,
+    prepare_rental_checkout,
     manage_rental_status,
     get_customer_rentals,
     get_vendor_rentals,
     get_owner_rentals,
 )
+
+from app.services.booking_payments import create_checkout
 
 from app.core.auth_dependency import (
     get_current_user,
@@ -51,19 +52,14 @@ def check_availability(
 # CREATE RENTAL BOOKING
 # ==========================================================
 
-@router.post(
-    "/create",
-    response_model=RentalCheckoutResponse
-)
+@router.post("/create")
 def create_rental(
     request: RentalCheckoutRequest,
-    current_user=Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
-
-    return create_rental_booking(
-        user_id=current_user.id,
-        request=request
-    )
+    user_id = str(current_user.id)
+    amount_paise, booking = prepare_rental_checkout(user_id, request)
+    return create_checkout(user_id, "rental", amount_paise, booking)
 
 
 # ==========================================================
