@@ -21,8 +21,9 @@ router = APIRouter(
 )
 
 BUCKET_NAME = "accessory-images"
-MAX_IMAGES = 5
+MAX_IMAGES = 2
 MAX_FILE_SIZE = 5 * 1024 * 1024
+MAX_USER_ACCESSORIES = 2
 
 ALLOWED_TYPES = {
     "image/jpeg",
@@ -151,7 +152,7 @@ async def create_accessory(
     if not photos or len(photos) > MAX_IMAGES:
         raise HTTPException(
             status_code=400,
-            detail="Upload between 1 and 5 accessory photos.",
+            detail="Upload between 1 and 2 accessory photos.",
         )
 
     user_id = str(current_user.id)
@@ -166,6 +167,42 @@ async def create_accessory(
             status_code=500,
             detail="Failed to verify uploader profile.",
         )
+
+    # =====================================================
+    # USER ACCESSORY UPLOAD LIMIT
+    # =====================================================
+
+    if uploader_role == "user":
+        try:
+            existing_accessories = (
+                supabase.table("accessories")
+                .select("id")
+                .eq("uploaded_by", user_id)
+                .eq("role", "user")
+                .execute()
+            )
+
+            accessory_count = len(existing_accessories.data or [])
+
+            if accessory_count >= MAX_USER_ACCESSORIES:
+                raise HTTPException(
+                    status_code=403,
+                    detail=(
+                        "User limit reached. You can upload only 3 accessories. "
+                        "Please delete an old accessory and add a new one."
+                    ),
+                )
+
+        except HTTPException:
+            raise
+
+        except Exception as exc:
+            print("ACCESSORY LIMIT CHECK ERROR:", repr(exc))
+
+            raise HTTPException(
+                status_code=500,
+                detail="Unable to verify accessory upload limit.",
+            )
 
     # Validate all images before database insertion.
     for photo in photos:

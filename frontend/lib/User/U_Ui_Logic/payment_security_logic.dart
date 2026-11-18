@@ -16,29 +16,31 @@ class PaymentSecurityLogic extends ChangeNotifier {
   final Map<String, dynamic> deliveryAddress;
 
   String selectedMethod = 'card';
-  String couponInput = 'HAUTE10';
-  bool couponApplied = true;
+  // String couponInput = 'HAUTE10';
+  // bool couponApplied = true;
   bool wardrobeExpanded = true;
   bool isSubmitting = false;
   String selectedSavedCard = 'HDFC Bank Infinia Metal';
 
-  double get discount => couponApplied ? rentalFee * 0.10 : 0;
-  double get totalDue => rentalFee - discount + coutureCareFee + securityDeposit;
+  // double get discount => couponApplied ? rentalFee * 0.10 : 0;
+  // double get totalDue => rentalFee - discount + coutureCareFee + securityDeposit;
+  double get totalDue => rentalFee  + coutureCareFee + securityDeposit;
+
 
   void selectMethod(String value) {
     selectedMethod = value;
     notifyListeners();
   }
 
-  void setCoupon(String value) {
-    couponInput = value;
-    notifyListeners();
-  }
-
-  void setCouponApplied(bool value) {
-    couponApplied = value;
-    notifyListeners();
-  }
+  // void setCoupon(String value) {
+  //   couponInput = value;
+  //   notifyListeners();
+  // }
+  //
+  // void setCouponApplied(bool value) {
+  //   couponApplied = value;
+  //   notifyListeners();
+  // }
 
   void toggleWardrobe() {
     wardrobeExpanded = !wardrobeExpanded;

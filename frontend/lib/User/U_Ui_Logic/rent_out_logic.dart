@@ -96,6 +96,7 @@ class RentOutLogic extends ChangeNotifier {
 
 
   double get totalPayable => rentalTotal + securityDeposit + careTotal + platformFee;
+  // double get totalPayable => rentalTotal + securityDeposit + platformFee;
 
   void setStartDate(int index, DateTime date) {
     if (index < 0 || index >= selectedOutfits.length) return;

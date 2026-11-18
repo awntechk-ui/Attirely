@@ -1390,15 +1390,80 @@ class _OutfitsState extends State<Outfits> {
   }
 
   Future<void> _openAccessories() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const AddAccessoriesPage(),
-      ),
-    );
 
-    if (mounted) {
-      logic.loadCollections();
+    // Refresh accessory count before allowing navigation.
+    if (!logic.isLoadingAccessories) {
+      await logic.loadAccessories();
+    }
+
+    if (!mounted) return;
+
+    // Maximum 3 accessories for a regular user.
+    if (logic.accessoryCount >= 2) {
+
+      showDialog(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+
+            icon: const Icon(
+              Icons.warning_amber_rounded,
+              color: burgundy,
+              size: 45,
+            ),
+
+            title: const Text(
+              'User Limit Reached',
+              style: TextStyle(
+                color: burgundy,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+
+            content: const Text(
+              'You can upload only 2 accessories.\n\n'
+                  'Please delete an old accessory and add a new one.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                },
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: burgundy,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      return;
+    } else {
+      // Limit not reached: open Add Accessories page.
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AddAccessoriesPage(),
+        ),
+      );
+
+      if (mounted) {
+        await logic.loadCollections();
+      }
     }
   }
 

@@ -39,10 +39,10 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
 
   final _checkout = BookingCheckout();
 
-  String get couponInput => logic.couponInput;
-  set couponInput(String value) => logic.setCoupon(value);
-  bool get couponApplied => logic.couponApplied;
-  set couponApplied(bool value) => logic.setCouponApplied(value);
+  // String get couponInput => logic.couponInput;
+  // set couponInput(String value) => logic.setCoupon(value);
+  // bool get couponApplied => logic.couponApplied;
+  // set couponApplied(bool value) => logic.setCouponApplied(value);
   bool get wardrobeExpanded => logic.wardrobeExpanded;
   set wardrobeExpanded(bool value) {
     if (logic.wardrobeExpanded != value) logic.toggleWardrobe();
@@ -52,7 +52,7 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
   final TextEditingController couponController =
   TextEditingController(text: 'HAUTE10');
 
-  double get discount => logic.discount;
+  // double get discount => logic.discount;
 
   static const double platformFeePerOutfit = 50;
 
@@ -61,7 +61,7 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
 
   double get totalDue =>
       widget.rentalFee -
-          discount +
+          // discount +
           widget.coutureCareFee +
           widget.securityDeposit +
           platformFee;
@@ -464,79 +464,79 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
     );
   }
 
-  Widget _couponSection() {
-    return _panel(
-      padding: const EdgeInsets.all(15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('COUTURE INVITE OR VOUCHER',
-              style: TextStyle(fontSize: 10, letterSpacing: .7, color: muted)),
-          const SizedBox(height: 9),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: TextField(
-                    controller: couponController,
-                    onChanged: (value) => couponInput = value,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: .5),
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10),
-                      border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
-                      enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: darkGreen), borderRadius: BorderRadius.zero),
-                      focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: darkGreen, width: 1.4), borderRadius: BorderRadius.zero),
-                      suffixIcon: couponApplied ? const Icon(Icons.check_circle_outline, size: 15, color: darkGreen) : null,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              SizedBox(
-                height: 44,
-                width: 72,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final valid = couponInput.trim().toUpperCase() == 'HAUTE10';
-                    setState(() => couponApplied = valid);
-                    showMessage(valid ? 'HAUTE10 applied successfully.' : 'Invalid voucher code.');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: green,
-                    foregroundColor: Colors.white,
-                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                    padding: EdgeInsets.zero,
-                  ),
-                  child: const Text('APPLY', style: TextStyle(fontSize: 12)),
-                ),
-              ),
-            ],
-          ),
-          if (couponApplied) ...[
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-              color: const Color(0xFFEAF3E9),
-              child: Row(
-                children: [
-                  const Icon(Icons.sell_outlined, size: 12, color: darkGreen),
-                  const SizedBox(width: 6),
-                  const Expanded(
-                    child: Text("VIP Code 'HAUTE10' applied",
-                        style: TextStyle(fontSize: 10, color: darkGreen)),
-                  ),
-                  Text('- ${money(discount)} (10%)',
-                      style: const TextStyle(fontSize: 10, color: darkGreen, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+  // Widget _couponSection() {
+  //   return _panel(
+  //     padding: const EdgeInsets.all(15),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Text('COUTURE INVITE OR VOUCHER',
+  //             style: TextStyle(fontSize: 10, letterSpacing: .7, color: muted)),
+  //         const SizedBox(height: 9),
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: SizedBox(
+  //                 height: 44,
+  //                 child: TextField(
+  //                   controller: couponController,
+  //                   onChanged: (value) => couponInput = value,
+  //                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: .5),
+  //                   decoration: InputDecoration(
+  //                     contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+  //                     border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
+  //                     enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: darkGreen), borderRadius: BorderRadius.zero),
+  //                     focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: darkGreen, width: 1.4), borderRadius: BorderRadius.zero),
+  //                     suffixIcon: couponApplied ? const Icon(Icons.check_circle_outline, size: 15, color: darkGreen) : null,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //             const SizedBox(width: 8),
+  //             SizedBox(
+  //               height: 44,
+  //               width: 72,
+  //               child: ElevatedButton(
+  //                 onPressed: () {
+  //                   final valid = couponInput.trim().toUpperCase() == 'HAUTE10';
+  //                   setState(() => couponApplied = valid);
+  //                   showMessage(valid ? 'HAUTE10 applied successfully.' : 'Invalid voucher code.');
+  //                 },
+  //                 style: ElevatedButton.styleFrom(
+  //                   backgroundColor: green,
+  //                   foregroundColor: Colors.white,
+  //                   shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+  //                   padding: EdgeInsets.zero,
+  //                 ),
+  //                 child: const Text('APPLY', style: TextStyle(fontSize: 12)),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         if (couponApplied) ...[
+  //           const SizedBox(height: 8),
+  //           Container(
+  //             width: double.infinity,
+  //             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+  //             color: const Color(0xFFEAF3E9),
+  //             child: Row(
+  //               children: [
+  //                 const Icon(Icons.sell_outlined, size: 12, color: darkGreen),
+  //                 const SizedBox(width: 6),
+  //                 const Expanded(
+  //                   child: Text("VIP Code 'HAUTE10' applied",
+  //                       style: TextStyle(fontSize: 10, color: darkGreen)),
+  //                 ),
+  //                 Text('- ${money(discount)} (10%)',
+  //                     style: const TextStyle(fontSize: 10, color: darkGreen, fontWeight: FontWeight.w600)),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _priceLine(String label, String amount, {bool emphasized = false, Widget? trailing}) {
     return Padding(
@@ -577,8 +577,8 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
               style: TextStyle(fontFamily: 'serif', fontSize: 18, color: Color(0xFF24352C))),
           const Divider(height: 19, color: border),
           _priceLine('Rental Fee (individual outfit durations)', money(widget.rentalFee)),
-          if (couponApplied)
-            _priceLine('HAUTE10 Special Privilege', '- ${money(discount)}'),
+          // if (couponApplied)
+          //   _priceLine('HAUTE10 Special Privilege', '- ${money(discount)}'),
           if (widget.coutureCareEnabled)
             _priceLine('Couture Care™ Damage Protection  ⓘ', money(widget.coutureCareFee)),
           _priceLine(
@@ -747,8 +747,8 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
         request: {
           'items': requestItems,
           'delivery_address': widget.deliveryAddress,
-          'couture_care': widget.coutureCareEnabled,
-          if (couponApplied) 'coupon_code': 'HAUTE10',
+          // 'couture_care': widget.coutureCareEnabled,
+          // if (couponApplied) 'coupon_code': 'HAUTE10',
         },
         expectedAmount: (totalDue * 100).round(),
         onConfirming: () {
@@ -961,11 +961,11 @@ class _PaymentSecurityPageState extends State<PaymentSecurityPage> {
                     _wardrobeBagCard(),
                     const SizedBox(height: 18),
                     _securityDepositCard(),
-                    const SizedBox(height: 21),
-                    AbsorbPointer(
-                      absorbing: isSubmitting || _checkout.hasPendingPayment,
-                      child: _couponSection(),
-                    ),
+                    // const SizedBox(height: 21),
+                    // AbsorbPointer(
+                    //   absorbing: isSubmitting || _checkout.hasPendingPayment,
+                    //   child: _couponSection(),
+                    // ),
                     const SizedBox(height: 12),
                     Container(
                       width: double.infinity,
