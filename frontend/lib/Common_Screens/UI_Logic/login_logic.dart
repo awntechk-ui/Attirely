@@ -91,14 +91,25 @@ class LoginLogic {
       // 2. SAVE SESSION
       // =====================================================
 
-      await SessionManager.setToken(accessToken.toString());
+      final role = response['role']
+          ?.toString()
+          .toLowerCase();
+
+      if (role != selectedRole) {
+        throw Exception('Selected account role does not match');
+      }
+
+      await SessionManager.setToken(
+        accessToken.toString(),
+        role!,
+      );
 
       if (!context.mounted) return;
 
       // Use the role returned by the backend.
-      final role = response['role']
-          ?.toString()
-          .toLowerCase();
+      // final role = response['role']
+      //     ?.toString()
+      //     .toLowerCase();
 
       // =====================================================
       // 3. CUSTOMER LOGIN — EXISTING FLOW

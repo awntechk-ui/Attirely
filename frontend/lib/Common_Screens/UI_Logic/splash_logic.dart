@@ -45,9 +45,18 @@ class SplashLogic {
       // VALIDATE TOKEN + GET ACCOUNT ROLE
       // -------------------------------------------------------
 
+      final savedRole = await SessionManager.loadRole();
+
+      if (savedRole == null || savedRole.isEmpty) {
+        await SessionManager.clearToken();
+        _goToLogin(context);
+        return;
+      }
+
       final response = await AuthApiRoutes.validateSession(
         accessToken: accessToken,
-      );
+        role: savedRole,
+      );  
 
       // -------------------------------------------------------
       // READ ROLE

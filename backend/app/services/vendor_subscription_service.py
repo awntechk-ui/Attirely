@@ -192,11 +192,12 @@ def get_current_vendor_subscription(vendor: dict):
 
     vendor_id = vendor["id"]
 
+    # Fetch the latest subscription, regardless of status.
     response = (
         supabase_admin.table("vendor_subscriptions")
         .select("*")
         .eq("vendor_id", vendor_id)
-        .eq("status", "active")
+        .order("created_at", desc=True)
         .limit(1)
         .execute()
     )
@@ -204,23 +205,20 @@ def get_current_vendor_subscription(vendor: dict):
     if not response.data:
         return {
             "success": True,
+            "has_subscription": False,
             "has_active_subscription": False,
             "subscription": None,
         }
 
     subscription = response.data[0]
+    status = subscription["status"]
 
+    # Read saved plan details.
     plan = subscription.get("plan_snapshot") or {}
 
-    # Existing subscriptions may have been created before
-    # media limits were added to the plan restrictions.
-    restrictions = plan.get("restrictions") or {}
-
-    if (
-        "max_images_per_listing" not in restrictions
-        or "max_videos_per_listing" not in restrictions
-    ):
-        current_plan_response = (
+    # Fallback for older subscriptions with incomplete snapshots.
+    if not plan or not plan.get("plan_code"):
+        plan_response = (
             supabase_admin.table("vendor_plan")
             .select("*")
             .eq("id", subscription["plan_id"])
@@ -228,33 +226,68 @@ def get_current_vendor_subscription(vendor: dict):
             .execute()
         )
 
-        if current_plan_response.data:
-            current_plan = current_plan_response.data[0]
+        if plan_response.data:
+            fallback_plan = _build_plan_snapshot(
+                plan_response.data[0]
+            )
+            plan = {**fallback_plan, **plan}
+
+
+    restrictions = plan.get("restrictions") or {}
+
+    # Fill missing media restrictions from the current plan.
+    if (
+        "max_images_per_listing" not in restrictions
+        or "max_videos_per_listing" not in restrictions
+    ):
+        plan_response = (
+            supabase_admin.table("vendor_plan")
+            .select("*")
+            .eq("id", subscription["plan_id"])
+            .limit(1)
+            .execute()
+        )
+
+        if plan_response.data:
             current_restrictions = _get_plan_restrictions(
-                current_plan
+                plan_response.data[0]
             )
 
-            restrictions.update(current_restrictions)
+            restrictions = {
+                **current_restrictions,
+                **restrictions,
+            }
 
     max_images = int(
-        restrictions.get("max_images_per_listing", 5)
+        restrictions.get(
+            "max_images_per_listing",
+            plan.get("max_images_per_listing", 5)
+        )
     )
 
     max_videos = int(
-        restrictions.get("max_videos_per_listing", 0)
+        restrictions.get(
+            "max_videos_per_listing",
+            plan.get("max_videos_per_listing", 0)
+        )
     )
 
     return {
         "success": True,
-        "has_active_subscription": True,
+        "has_subscription": True,
+        "has_active_subscription": status == "active",
+
         "subscription": {
             "id": subscription["id"],
-            "status": subscription["status"],
+            "status": status,
 
             "plan_code": plan.get("plan_code"),
             "plan_name": plan.get("plan_name"),
             "plan_label": plan.get("plan_label"),
+            "description": plan.get("description"),
+
             "price": plan.get("price"),
+            "currency": plan.get("currency"),
             "billing_interval": plan.get("billing_interval"),
 
             "outfits_limit": plan.get("outfits_limit"),
@@ -267,14 +300,17 @@ def get_current_vendor_subscription(vendor: dict):
                 "accessories_unlimited", False
             ),
 
+            "features": plan.get("features") or [],
+            "restrictions": restrictions,
+
             "max_images_per_listing": max_images,
             "max_videos_per_listing": max_videos,
 
             "starts_at": subscription.get("starts_at"),
             "ends_at": subscription.get("ends_at"),
+            "activated_at": subscription.get("activated_at"),
         },
     }
-
 
 # =========================================================
 # GET ACTIVE VENDOR PLAN FOR ENFORCEMENT
@@ -472,3 +508,33 @@ def check_vendor_image_limit(
         )
 
     return maximum
+
+# =========================================================
+# GET ALL ACTIVE VENDOR PLANS
+# =========================================================
+
+def get_active_vendor_plans():
+
+    try:
+        response = (
+            supabase_admin.table("vendor_plan")
+            .select("*")
+            .eq("target_role", "vendor")
+            .eq("is_active", True)
+            .order("display_order")
+            .execute()
+        )
+
+        return {
+            "success": True,
+            "plans": response.data or []
+        }
+
+    except Exception as e:
+        print("GET VENDOR PLANS ERROR:", repr(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch vendor plans"
+        )
+

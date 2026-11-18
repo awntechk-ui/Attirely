@@ -1,3 +1,4 @@
+import 'package:attirely/Vendor/V_Ui/upgrade.dart';
 import 'package:flutter/material.dart';
 
 import 'package:attirely/Common_Screens/session_manager.dart';
@@ -193,8 +194,13 @@ class _VendorProfileState extends State<VendorProfile> {
                         children: [
                           _buildStoreCard(),
 
-                          // BUSINESS OVERVIEW intentionally removed
-                          // from the visible profile page.
+                          _buildStoreCard(),
+
+                          const SizedBox(height: 18),
+
+                          _buildUpgradePlanCard(),
+
+// BUSINESS OVERVIEW intentionally removed                          // from the visible profile page.
                           // Previous implementation is retained below
                           // in comments.
 
@@ -534,6 +540,149 @@ class _VendorProfileState extends State<VendorProfile> {
       ),
     );
   }
+
+  Widget _buildUpgradePlanCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(19),
+      decoration: BoxDecoration(
+        gradient: topGradient,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: gold.withOpacity(0.75),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: darkBurgundy.withOpacity(0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                height: 43,
+                width: 43,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(
+                    color: gold.withOpacity(0.6),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.workspace_premium_outlined,
+                  color: gold,
+                  size: 25,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'GROW WITH ATTIRELY',
+                      style: TextStyle(
+                        color: gold,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.3,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Manage Your Plan',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Georgia',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons.auto_awesome,
+                color: gold,
+                size: 25,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 15),
+
+          const Text(
+            'Upgrade your plan to unlock more listing capacity '
+                'and grow your collection.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              height: 1.6,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const Upgrade(),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: gold,
+                side: const BorderSide(
+                  color: gold,
+                  width: 1.4,
+                ),
+                backgroundColor: Colors.white.withOpacity(0.04),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'EXPLORE PLANS',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                      fontSize: 11,
+                    ),
+                  ),
+                  SizedBox(width: 9),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   // ---------------------------------------------------------
   // BUSINESS OVERVIEW - RETAINED, NOT DISPLAYED

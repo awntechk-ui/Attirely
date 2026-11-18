@@ -57,19 +57,9 @@ ALLOWED_EXTENSIONS = {
 }
 
 
+
 def get_uploader(user_id: str):
-    """Resolve uploader role from database profiles."""
-
-    vendor = (
-        supabase.table("vendors")
-        .select("id")
-        .eq("auth_user_id", user_id)
-        .limit(1)
-        .execute()
-    )
-
-    if vendor.data:
-        return "vendor"
+    """Validate that the authenticated account has a User profile."""
 
     user = (
         supabase.table("users")
@@ -84,8 +74,9 @@ def get_uploader(user_id: str):
 
     raise HTTPException(
         status_code=403,
-        detail="No registered user or vendor profile found.",
+        detail="User profile not found. You cannot upload outfits as a User.",
     )
+
 
 
 @router.post("")
@@ -429,7 +420,7 @@ async def get_my_outfits(current_user=Depends(get_current_user)):
             supabase.table("outfits")
             .select("*")
             .eq("uploaded_by", user_id)
-            # .eq("role", "vendor")
+            .eq("role", "vendor")
             .order("created_at", desc=True)
             .execute()
         )

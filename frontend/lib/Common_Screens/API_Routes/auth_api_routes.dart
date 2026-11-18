@@ -107,17 +107,18 @@ class AuthApiRoutes {
 
   static Future<Map<String, dynamic>> validateSession({
     required String accessToken,
+    required String role,
   }) async {
 
     print('CALLING SESSION API');
 
     final response = await http.get(
-      Uri.parse(
-        '${AppConfig.baseUrl}/auth/session',
-      ),
+      Uri.parse('${AppConfig.baseUrl}/auth/session?role=$role'),
+
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
+        'X-Account-Role': role,
       },
     );
 

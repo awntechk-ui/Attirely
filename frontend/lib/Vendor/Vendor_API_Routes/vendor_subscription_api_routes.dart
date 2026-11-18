@@ -65,4 +65,39 @@ class VendorSubscriptionApiRoutes {
       data['detail'] ?? 'Failed to fetch subscription',
     );
   }
+
+  // =========================================
+  // GET ALL ACTIVE VENDOR PLANS
+  // =========================================
+
+  static Future<List<Map<String, dynamic>>> getActivePlans({
+    required String accessToken,
+  }) async {
+    final response = await http.get(
+      Uri.parse(
+        '${AppConfig.baseUrl}/vendor/subscription/plans',
+      ),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300) {
+      final List plans = data['plans'] ?? [];
+
+      return plans
+          .map((plan) => Map<String, dynamic>.from(plan))
+          .toList();
+    }
+
+    throw Exception(
+      data['detail'] ?? 'Failed to fetch vendor plans',
+    );
+  }
+
+
 }

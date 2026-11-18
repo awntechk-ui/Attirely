@@ -283,7 +283,7 @@ def login(data: LoginRequest):
             )
 
         # ====================================================
-        # SUPABASE AUTHENTICATION
+        # SUPABASE A    UTHENTICATION
         # ====================================================
 
         response = supabase_auth.auth.sign_in_with_password(
@@ -379,56 +379,43 @@ def login(data: LoginRequest):
         )
 
 # ============================================================
-# VALIDATE SESSION + DETERMINE ACCOUNT TYPE
+# VALIDATE SESSION USING SELECTED ROLE
 # ============================================================
 
 @router.get("/session")
 def validate_session(
+    role: str,
     current_user=Depends(get_current_user),
 ):
-    print("SESSION ENDPOINT CALLED")
-
     user_id = str(current_user.id)
 
+    if role not in ["user", "vendor"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid account role",
+        )
+
     try:
-
         # ----------------------------------------------------
-        # CHECK VENDOR
-        # ----------------------------------------------------
-
-        vendor_response = (
-            supabase_admin
-            .table("vendors")
-            .select("id, store_name")
-            .eq("auth_user_id", user_id)
-            .limit(1)
-            .execute()
-        )
-
-        if vendor_response.data:
-
-            return {
-                "valid": True,
-                "user_id": user_id,
-                "role": "vendor",
-                "vendor_id": vendor_response.data[0]["id"],
-                "store_name": vendor_response.data[0]["store_name"],
-            }
-
-        # ----------------------------------------------------
-        # CHECK NORMAL USER
+        # USER SESSION
         # ----------------------------------------------------
 
-        user_response = (
-            supabase_admin
-            .table("users")
-            .select("id, full_name")
-            .eq("id", user_id)
-            .limit(1)
-            .execute()
-        )
+        if role == "user":
 
-        if user_response.data:
+            user_response = (
+                supabase_admin
+                .table("users")
+                .select("id, full_name")
+                .eq("id", user_id)
+                .limit(1)
+                .execute()
+            )
+
+            if not user_response.data:
+                raise HTTPException(
+                    status_code=403,
+                    detail="User profile not found",
+                )
 
             return {
                 "valid": True,
@@ -438,23 +425,42 @@ def validate_session(
             }
 
         # ----------------------------------------------------
-        # AUTH ACCOUNT EXISTS BUT PROFILE DOES NOT
+        # VENDOR SESSION
         # ----------------------------------------------------
 
-        raise HTTPException(
-            status_code=403,
-            detail="Account profile not found",
-        )
+        if role == "vendor":
+
+            vendor_response = (
+                supabase_admin
+                .table("vendors")
+                .select("id, store_name")
+                .eq("auth_user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+
+            if not vendor_response.data:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Vendor profile not found",
+                )
+
+            return {
+                "valid": True,
+                "user_id": user_id,
+                "role": "vendor",
+                "vendor_id": vendor_response.data[0]["id"],
+                "store_name": vendor_response.data[0]["store_name"],
+            }
 
     except HTTPException:
         raise
 
     except Exception as e:
 
-        print("SESSION ROLE ERROR:", repr(e))
+        print("SESSION VALIDATION ERROR:", repr(e))
 
         raise HTTPException(
             status_code=500,
-            detail="Failed to determine account type",
+            detail="Failed to validate session",
         )
-    
