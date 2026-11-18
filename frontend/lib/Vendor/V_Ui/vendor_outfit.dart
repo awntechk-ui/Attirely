@@ -1,3 +1,4 @@
+import 'package:attirely/Vendor/V_Ui/upgrade.dart';
 import 'package:attirely/Vendor/V_Ui/v_add_kids_outfit.dart';
 import 'package:attirely/Vendor/V_Ui/v_add_men_outfit.dart';
 import 'package:attirely/Vendor/V_Ui/v_add_women_outfit.dart';
@@ -1505,11 +1506,10 @@ class _VendorOutfitState extends State<VendorOutfit> {
                     onPressed: () {
                       Navigator.pop(dialogContext);
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Plan upgrade feature coming soon!',
-                          ),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const Upgrade(),
                         ),
                       );
                     },

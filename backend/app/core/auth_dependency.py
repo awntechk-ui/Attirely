@@ -22,6 +22,8 @@ def get_current_user(
         response = supabase_auth.auth.get_user(access_token)
 
         if response.user is None:
+            print("AUTHENTICATION ERROR: Supabase returned no user")
+
             raise HTTPException(
                 status_code=401,
                 detail="Invalid or expired access token",
@@ -32,7 +34,9 @@ def get_current_user(
     except HTTPException:
         raise
 
-    except Exception:
+    except Exception as e:
+        print("AUTHENTICATION ERROR:", repr(e))
+
         raise HTTPException(
             status_code=401,
             detail="Invalid or expired access token",

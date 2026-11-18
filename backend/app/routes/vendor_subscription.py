@@ -9,6 +9,7 @@ from app.schemas.vendor_subscription import (
 from app.services.vendor_subscription_service import (
     select_vendor_plan,
     get_current_vendor_subscription,
+    get_active_vendor_plans,
 )
 
 
@@ -42,3 +43,11 @@ def get_current_subscription(
     vendor: dict = Depends(get_current_vendor),
 ):
     return get_current_vendor_subscription(vendor=vendor)
+
+
+# GET ALL ACTIVE VENDOR PLANS
+@router.get("/plans")
+def get_vendor_plans(
+    vendor: dict = Depends(get_current_vendor)
+):
+    return get_active_vendor_plans()

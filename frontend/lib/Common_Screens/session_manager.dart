@@ -4,20 +4,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionManager {
   static String? accessToken;
+  static String? selectedRole;
 
   // =========================================================
   // SET TOKEN
   // =========================================================
 
-  static Future<void> setToken(String token) async {
+  static Future<void> setToken(
+      String token,
+      String role,
+      ) async {
     accessToken = token;
+    selectedRole = role;
 
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString(
-      'access_token',
-      token,
-    );
+    await prefs.setString('access_token', token);
+    await prefs.setString('selected_role', role);
+  }
+  static Future<String?> loadRole() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    selectedRole = prefs.getString('selected_role');
+
+    return selectedRole;
   }
 
   // =========================================================
@@ -50,12 +60,12 @@ class SessionManager {
 
   static Future<void> clearToken() async {
     accessToken = null;
+    selectedRole = null;
 
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.remove(
-      'access_token',
-    );
+    await prefs.remove('access_token');
+    await prefs.remove('selected_role');
   }
 
   // =========================================================
