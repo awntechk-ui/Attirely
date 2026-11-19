@@ -9,6 +9,21 @@ import '../../Common_Screens/session_manager.dart';
 import '../../app_config.dart';
 
 class BookingCheckout {
+  BookingCheckout({
+    this.verificationPath = '/payments/verify',
+    this.confirmationPendingStatus = 'booking_pending',
+    this.confirmationPendingMessage =
+        'Payment received. Your booking is still being confirmed.',
+    this.statusButtonLabel = 'Check booking status',
+    this.priceChangedMessage =
+        'The checkout total changed. Reopen the booking to refresh the price.',
+  });
+
+  final String verificationPath;
+  final String confirmationPendingStatus;
+  final String confirmationPendingMessage;
+  final String statusButtonLabel;
+  final String priceChangedMessage;
   Map<String, dynamic>? _pendingVerification;
 
   bool get hasPendingPayment => _pendingVerification != null;
@@ -28,10 +43,19 @@ class BookingCheckout {
 
     if (_pendingVerification == null) {
       final order = await _post(path, request);
-      if (order['amount'] != expectedAmount || order['currency'] != 'INR') {
+      if (order['success'] == true) return order;
+      if (order['status'] == confirmationPendingStatus) {
         throw Exception(
-          'The checkout total changed. Reopen the booking to refresh the price.',
+          '$confirmationPendingMessage Tap Continue to check again.',
         );
+      }
+      if (order['status'] == 'capture_pending') {
+        throw Exception(
+          'Payment confirmation is still in progress. Tap Continue to check again.',
+        );
+      }
+      if (order['amount'] != expectedAmount || order['currency'] != 'INR') {
+        throw Exception(priceChangedMessage);
       }
 
       final payment = await _open(order, description);
@@ -56,7 +80,7 @@ class BookingCheckout {
 
       try {
         final result = await _post(
-          '/payments/verify',
+          verificationPath,
           verification,
           timeout: const Duration(seconds: 10),
         );
@@ -65,7 +89,7 @@ class BookingCheckout {
           return result;
         }
         paymentCaptured =
-            paymentCaptured || result['status'] == 'booking_pending';
+            paymentCaptured || result['status'] == confirmationPendingStatus;
       } on TimeoutException {
         // The same verification can be submitted again after a lost response.
       } on http.ClientException {
@@ -80,10 +104,10 @@ class BookingCheckout {
     }
 
     final status = paymentCaptured
-        ? 'Payment received. Your booking is still being confirmed.'
+        ? confirmationPendingMessage
         : 'Payment confirmation is still in progress.';
     throw Exception(
-      "$status Tap Check booking status to check the same payment.",
+      '$status Tap $statusButtonLabel to check the same payment.',
     );
   }
 

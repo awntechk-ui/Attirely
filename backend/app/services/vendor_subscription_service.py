@@ -61,10 +61,7 @@ def _build_plan_snapshot(plan: dict) -> dict:
 # SELECT / ACTIVATE VENDOR PLAN
 # =========================================================
 
-def select_vendor_plan(vendor: dict, plan_code: str):
-
-    vendor_id = vendor["id"]
-
+def get_available_vendor_plan(plan_code: str):
     plan_response = (
         supabase_admin.table("vendor_plan")
         .select("*")
@@ -81,26 +78,36 @@ def select_vendor_plan(vendor: dict, plan_code: str):
             detail="Selected subscription plan is unavailable",
         )
 
-    plan = plan_response.data[0]
+    return plan_response.data[0]
 
-    # Paid plans remain unavailable until payment integration is ready.
+
+def _active_subscriptions(vendor_id):
+    now = datetime.now(timezone.utc).isoformat()
+    return (
+        supabase_admin.table("vendor_subscriptions")
+        .select("*")
+        .eq("vendor_id", vendor_id)
+        .eq("status", "active")
+        .or_(f"ends_at.is.null,ends_at.gt.{now}")
+        .order("created_at", desc=True)
+    )
+
+
+def select_vendor_plan(vendor: dict, plan_code: str):
+    vendor_id = vendor["id"]
+    plan = get_available_vendor_plan(plan_code)
+
+    # This endpoint activates the free Starter plan.
     if (
         float(plan["price"]) != 0
         or plan["billing_interval"] != "lifetime"
     ):
         raise HTTPException(
-            status_code=501,
-            detail="Paid subscription activation is coming soon",
+            status_code=400,
+            detail="Use Razorpay Checkout to activate a paid plan",
         )
 
-    active_response = (
-        supabase_admin.table("vendor_subscriptions")
-        .select("*")
-        .eq("vendor_id", vendor_id)
-        .eq("status", "active")
-        .limit(1)
-        .execute()
-    )
+    active_response = _active_subscriptions(vendor_id).limit(1).execute()
 
     if active_response.data:
         existing = active_response.data[0]
@@ -153,6 +160,11 @@ def select_vendor_plan(vendor: dict, plan_code: str):
     }
 
     try:
+        supabase_admin.table("vendor_subscriptions").update(
+            {"status": "expired"}
+        ).eq("vendor_id", vendor_id).eq("status", "active").lte(
+            "ends_at", now
+        ).execute()
         insert_response = (
             supabase_admin.table("vendor_subscriptions")
             .insert(subscription_data)
@@ -192,15 +204,16 @@ def get_current_vendor_subscription(vendor: dict):
 
     vendor_id = vendor["id"]
 
-    # Fetch the latest subscription, regardless of status.
-    response = (
-        supabase_admin.table("vendor_subscriptions")
-        .select("*")
-        .eq("vendor_id", vendor_id)
-        .order("created_at", desc=True)
-        .limit(1)
-        .execute()
-    )
+    response = _active_subscriptions(vendor_id).limit(1).execute()
+    if not response.data:
+        response = (
+            supabase_admin.table("vendor_subscriptions")
+            .select("*")
+            .eq("vendor_id", vendor_id)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
 
     if not response.data:
         return {
@@ -212,6 +225,14 @@ def get_current_vendor_subscription(vendor: dict):
 
     subscription = response.data[0]
     status = subscription["status"]
+    ends_at = subscription.get("ends_at")
+    if (
+        status == "active"
+        and ends_at
+        and datetime.fromisoformat(ends_at.replace("Z", "+00:00"))
+        <= datetime.now(timezone.utc)
+    ):
+        status = "expired"
 
     # Read saved plan details.
     plan = subscription.get("plan_snapshot") or {}
@@ -324,14 +345,7 @@ def get_vendor_plan_limits(vendor: dict) -> dict:
 
     vendor_id = vendor["id"]
 
-    response = (
-        supabase_admin.table("vendor_subscriptions")
-        .select("*")
-        .eq("vendor_id", vendor_id)
-        .eq("status", "active")
-        .limit(1)
-        .execute()
-    )
+    response = _active_subscriptions(vendor_id).limit(1).execute()
 
     if not response.data:
         raise HTTPException(

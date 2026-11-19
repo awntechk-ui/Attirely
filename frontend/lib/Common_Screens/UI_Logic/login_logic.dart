@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../Vendor/V_Ui/upgrade.dart';
 import '../../Vendor/Vendor_API_Routes/vendor_auth_api_routes.dart';
 import '../../Vendor/Vendor_API_Routes/vendor_subscription_api_routes.dart';
 import '../API_Routes/auth_api_routes.dart';
@@ -177,6 +178,16 @@ class LoginLogic {
         // ---------------------------------------------------
 
         if (!hasActiveSubscription) {
+          final subscription = subscriptionResponse['subscription'];
+          if (subscription is Map && subscription['status'] == 'expired') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const Upgrade(requiresActivation: true),
+              ),
+            );
+            return;
+          }
           Navigator.pushReplacementNamed(
             context,
             AppRoutes.vendorUpgrade,

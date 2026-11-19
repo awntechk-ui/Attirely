@@ -1,9 +1,12 @@
 
 import 'package:flutter/material.dart';
+import '../../app_routes.dart';
 import '../V_Ui_Logic/upgrade_logic.dart';
 
 class Upgrade extends StatefulWidget {
-  const Upgrade({super.key});
+  const Upgrade({super.key, this.requiresActivation = false});
+
+  final bool requiresActivation;
 
   @override
   State<Upgrade> createState() => _UpgradeState();
@@ -49,7 +52,7 @@ class _UpgradeState extends State<Upgrade> {
   }
 
   bool _isCurrent(Map<String, dynamic> plan) {
-    return logic.currentPlanCode != null &&
+    return logic.hasActiveSubscription &&
         logic.currentPlanCode == plan['plan_code'];
   }
 
@@ -238,7 +241,9 @@ class _UpgradeState extends State<Upgrade> {
                 Row(
                   children: [
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: logic.isCheckingOut || widget.requiresActivation
+                          ? null
+                          : () => Navigator.pop(context),
                       icon: const Icon(
                         Icons.arrow_back_ios_new,
                         color: cream,
@@ -1139,7 +1144,9 @@ class _UpgradeState extends State<Upgrade> {
     required bool comingSoon,
     required bool selected,
   }) {
-    final disabled = current || comingSoon;
+    final freePlanUnavailable =
+        !current && logic.hasActiveSubscription && !logic.isPaidPlan(plan);
+    final disabled = current || comingSoon || freePlanUnavailable;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
@@ -1166,7 +1173,7 @@ class _UpgradeState extends State<Upgrade> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(15),
-          onTap: disabled
+          onTap: disabled || logic.isCheckingOut || logic.hasPendingPayment
               ? null
               : () => logic.setSelectedPlan(plan),
           child: Center(
@@ -1179,7 +1186,7 @@ class _UpgradeState extends State<Upgrade> {
                     color: burgundy,
                     size: 16,
                   )
-                else if (comingSoon)
+                else if (comingSoon || freePlanUnavailable)
                   const Icon(
                     Icons.lock_outline,
                     color: Colors.black45,
@@ -1201,6 +1208,8 @@ class _UpgradeState extends State<Upgrade> {
                       ? 'YOUR CURRENT PLAN'
                       : comingSoon
                       ? 'COMING SOON'
+                      : freePlanUnavailable
+                      ? 'AVAILABLE AFTER YOUR PLAN ENDS'
                       : selected
                       ? 'PLAN SELECTED'
                       : 'EXPLORE THIS PLAN',
@@ -1278,7 +1287,9 @@ class _UpgradeState extends State<Upgrade> {
             const SizedBox(width: 10),
 
             ElevatedButton(
-              onPressed: _showConfirmation,
+              onPressed: logic.isCheckingOut || logic.isLoading
+                  ? null
+                  : _showConfirmation,
               style: ElevatedButton.styleFrom(
                 backgroundColor: burgundy,
                 foregroundColor: cream,
@@ -1295,18 +1306,22 @@ class _UpgradeState extends State<Upgrade> {
                   ),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Continue',
-                    style: TextStyle(
+                    logic.isCheckingOut
+                        ? 'Processing…'
+                        : logic.hasPendingPayment
+                        ? 'Check payment status'
+                        : 'Continue',
+                    style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 11,
                     ),
                   ),
-                  SizedBox(width: 6),
-                  Icon(
+                  const SizedBox(width: 6),
+                  const Icon(
                     Icons.arrow_forward_rounded,
                     size: 15,
                   ),
@@ -1325,8 +1340,13 @@ class _UpgradeState extends State<Upgrade> {
 
   Future<void> _showConfirmation() async {
     final selected = logic.selectedPlan;
-
-    if (selected == null) return;
+    if (selected == null || logic.isCheckingOut) return;
+    if (logic.hasPendingPayment) {
+      await _activatePlan();
+      return;
+    }
+    final paid = logic.isPaidPlan(selected);
+    final amount = _price(selected['price']);
 
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
@@ -1372,7 +1392,7 @@ class _UpgradeState extends State<Upgrade> {
               const SizedBox(height: 17),
 
               const Text(
-                'A choice for your next chapter.',
+                'Confirm your plan',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: darkBurgundy,
@@ -1396,12 +1416,13 @@ class _UpgradeState extends State<Upgrade> {
 
               const SizedBox(height: 12),
 
-              const Text(
-                'Confirming here only records your selection '
-                    'on this screen. It will not activate the plan, '
-                    'create a subscription or process a payment.',
+              Text(
+                paid
+                    ? '₹$amount for one month. Renew manually.\n'
+                      'Razorpay test mode. No money will be charged.'
+                    : 'Activate this free plan.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.black54,
                   fontSize: 11,
                   height: 1.6,
@@ -1424,9 +1445,9 @@ class _UpgradeState extends State<Upgrade> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
-                    'CONFIRM SELECTION',
-                    style: TextStyle(
+                  child: Text(
+                    paid ? 'PAY WITH RAZORPAY' : 'ACTIVATE PLAN',
+                    style: const TextStyle(
                       letterSpacing: 1,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
@@ -1455,20 +1476,32 @@ class _UpgradeState extends State<Upgrade> {
       },
     );
 
-    if (confirmed == true && mounted) {
-      logic.confirmPlanSelection();
+    if (confirmed == true && mounted) await _activatePlan();
+  }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: darkBurgundy,
-          content: Text(
-            'Your plan selection has been acknowledged. '
-                'Your current subscription remains unchanged.',
-          ),
-        ),
-      );
+  Future<void> _activatePlan() async {
+    String message;
+    try {
+      final activated = await logic.activateSelectedPlan();
+      if (!mounted || !activated) return;
+      if (widget.requiresActivation) {
+        Navigator.pushReplacementNamed(context, AppRoutes.vendorMain);
+        return;
+      }
+      message = logic.errorMessage == null
+          ? 'Your plan is active.'
+          : 'Your plan was activated. Refresh to see the updated details.';
+    } catch (error) {
+      message = error.toString().replaceFirst('Exception: ', '');
     }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: darkBurgundy,
+        content: Text(message),
+      ),
+    );
   }
 
   // =====================================================

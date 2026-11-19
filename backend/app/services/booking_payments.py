@@ -14,12 +14,16 @@ from app.core.supabase import supabase_admin
 logger = logging.getLogger(__name__)
 
 
-def razorpay_request(method, path, **kwargs):
+def razorpay_credentials():
     key_id = os.getenv("RAZORPAY_KEY_ID", "")
     secret = os.getenv("RAZORPAY_KEY_SECRET", "")
     if not key_id.startswith("rzp_test_") or not secret:
         raise HTTPException(503, "Razorpay test keys are not configured")
+    return key_id, secret
 
+
+def razorpay_request(method, path, **kwargs):
+    key_id, secret = razorpay_credentials()
     try:
         response = httpx.request(
             method,
@@ -35,9 +39,8 @@ def razorpay_request(method, path, **kwargs):
         raise HTTPException(502, "Razorpay is currently unavailable") from error
 
 
-def create_checkout(user_id, kind, amount, booking):
-    checkout_id = str(uuid4())
-    order, key_id = razorpay_request(
+def create_razorpay_order(checkout_id, amount):
+    return razorpay_request(
         "POST",
         "orders",
         json={
@@ -46,6 +49,11 @@ def create_checkout(user_id, kind, amount, booking):
             "receipt": checkout_id,
         },
     )
+
+
+def create_checkout(user_id, kind, amount, booking):
+    checkout_id = str(uuid4())
+    order, key_id = create_razorpay_order(checkout_id, amount)
     supabase_admin.table("booking_checkouts").insert({
         "id": checkout_id,
         "user_id": user_id,
@@ -85,30 +93,35 @@ def confirmation_pending(checkout_id, status):
     })
 
 
-def verify_checkout(user_id, checkout_id, payment_id, signature):
-    checkout = get_checkout(user_id, checkout_id)
-    order_id = checkout["razorpay_order_id"]
-    secret = os.getenv("RAZORPAY_KEY_SECRET", "")
-    if not os.getenv("RAZORPAY_KEY_ID", "").startswith("rzp_test_") or not secret:
-        raise HTTPException(503, "Razorpay test keys are not configured")
+def verify_razorpay_signature(order_id, payment_id, signature):
+    _, secret = razorpay_credentials()
     expected = hmac.new(
         secret.encode(), f"{order_id}|{payment_id}".encode(), hashlib.sha256
     ).hexdigest()
     if not hmac.compare_digest(expected, signature):
         raise HTTPException(400, "Razorpay payment signature is invalid")
+
+
+def razorpay_payment_status(checkout, payment):
+    if (
+        payment.get("order_id") != checkout["razorpay_order_id"]
+        or payment.get("amount") != checkout["amount_paise"]
+        or payment.get("currency") != "INR"
+    ):
+        raise HTTPException(400, "Payment details do not match this checkout")
+    return payment.get("status")
+
+
+def verify_checkout(user_id, checkout_id, payment_id, signature):
+    checkout = get_checkout(user_id, checkout_id)
+    verify_razorpay_signature(checkout["razorpay_order_id"], payment_id, signature)
     if checkout["result"] is not None:
         if checkout["payment_id"] != payment_id:
             raise HTTPException(409, "Checkout has already been paid")
         return checkout["result"]
 
     payment, _ = razorpay_request("GET", f"payments/{payment_id}")
-    if (
-        payment.get("order_id") != order_id
-        or payment.get("amount") != checkout["amount_paise"]
-        or payment.get("currency") != "INR"
-    ):
-        raise HTTPException(400, "Payment details do not match this checkout")
-    payment_status = payment.get("status")
+    payment_status = razorpay_payment_status(checkout, payment)
     if payment_status in {"created", "authorized"}:
         return confirmation_pending(checkout_id, "capture_pending")
     if payment_status != "captured":
